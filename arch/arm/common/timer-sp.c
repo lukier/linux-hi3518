@@ -79,10 +79,11 @@ void __init __sp804_clocksource_and_sched_clock_init(void __iomem *base,
 	long rate;
 
 	if (!clk) {
+        printk(KERN_INFO "Need DevID sp804, ConID %s\n", name);
 		clk = clk_get_sys("sp804", name);
 		if (IS_ERR(clk)) {
-			pr_err("sp804: clock not found: %d\n",
-			       (int)PTR_ERR(clk));
+			pr_err("sp804: clock not found: %d %s\n",
+			       (int)PTR_ERR(clk), name);
 			return;
 		}
 	}
@@ -92,6 +93,8 @@ void __init __sp804_clocksource_and_sched_clock_init(void __iomem *base,
 	if (rate < 0)
 		return;
 
+    printk(KERN_INFO "Timer initialized 0x%08X\n", base);
+    
 	/* setup timer 0 as free-running clocksource */
 	writel(0, base + TIMER_CTRL);
 	writel(0xffffffff, base + TIMER_LOAD);

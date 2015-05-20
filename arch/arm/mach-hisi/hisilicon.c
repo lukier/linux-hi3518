@@ -1,10 +1,12 @@
 /*
  * (Hisilicon's SoC based) flattened device tree enabled machine
  *
+ * Copyright (c) 2015 Robert Lukierski.
  * Copyright (c) 2012-2013 Hisilicon Ltd.
  * Copyright (c) 2012-2013 Linaro Ltd.
  *
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
+ *         Robert Lukierski <robert@lukierski.eu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -53,6 +55,15 @@ static const char *const hi3xxx_compat[] __initconst = {
 DT_MACHINE_START(HI3620, "Hisilicon Hi3620 (Flattened Device Tree)")
 	.map_io		= hi3620_map_io,
 	.dt_compat	= hi3xxx_compat,
+MACHINE_END
+
+static const char *const hi3518_compat[] __initconst = {
+    "hisilicon,hi3518",
+    NULL,
+};
+
+DT_MACHINE_START(HI3518, "Hisilicon Hi3518 (Flattened Device Tree)")
+    .dt_compat  = hi3518_compat,
 MACHINE_END
 
 static const char *const hix5hd2_compat[] __initconst = {

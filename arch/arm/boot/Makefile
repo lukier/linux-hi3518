@@ -51,8 +51,11 @@ $(obj)/Image: vmlinux FORCE
 $(obj)/compressed/vmlinux: $(obj)/Image FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/compressed $@
 
-$(obj)/zImage:	$(obj)/compressed/vmlinux FORCE
+$(obj)/zImage:	$(obj)/compressed/vmlinux arch/arm/boot/dts/hisi-3518-camera.dtb FORCE
 	$(call if_changed,objcopy)
+	@$(kecho) 'Appending hisi-3518-camera.dtb'
+	@cat arch/arm/boot/zImage arch/arm/boot/dts/hisi-3518-camera.dtb > arch/arm/boot/zImage.tmp
+	@mv arch/arm/boot/zImage.tmp arch/arm/boot/zImage
 	@$(kecho) '  Kernel: $@ is ready'
 
 endif

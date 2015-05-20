@@ -145,11 +145,13 @@ static struct clk_lookup *clk_find(const char *dev_id, const char *con_id)
 	list_for_each_entry(p, &clocks, node) {
 		match = 0;
 		if (p->dev_id) {
+            printk(KERN_INFO "DevID %s vs %s\n", p->dev_id, dev_id);
 			if (!dev_id || strcmp(p->dev_id, dev_id))
 				continue;
 			match += 2;
 		}
 		if (p->con_id) {
+            printk(KERN_INFO "ConID %s vs %s\n", p->con_id, con_id);
 			if (!con_id || strcmp(p->con_id, con_id))
 				continue;
 			match += 1;

@@ -22,6 +22,7 @@ endif
 OBJCOPYFLAGS	:=-O binary -R .comment -S
 GZFLAGS		:=-9
 #KBUILD_CFLAGS	+=-pipe
+KBUILD_CFLAGS	+=-march=armv5te -mtune=arm926ej-s -msoft-float -mfloat-abi=soft
 
 # Never generate .eh_frame
 KBUILD_CFLAGS	+= $(call cc-option,-fno-dwarf2-cfi-asm)
