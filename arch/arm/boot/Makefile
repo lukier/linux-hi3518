@@ -22,6 +22,8 @@ endif
 ZRELADDR    := $(zreladdr-y)
 PARAMS_PHYS := $(params_phys-y)
 INITRD_PHYS := $(initrd_phys-y)
+#DTB_FILE    := versatile-pb
+DTB_FILE    := hisi-3518-camera
 
 export ZRELADDR INITRD_PHYS PARAMS_PHYS
 
@@ -51,10 +53,10 @@ $(obj)/Image: vmlinux FORCE
 $(obj)/compressed/vmlinux: $(obj)/Image FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/compressed $@
 
-$(obj)/zImage:	$(obj)/compressed/vmlinux arch/arm/boot/dts/hisi-3518-camera.dtb FORCE
+$(obj)/zImage:	$(obj)/compressed/vmlinux arch/arm/boot/dts/$(DTB_FILE).dtb FORCE
 	$(call if_changed,objcopy)
-	@$(kecho) 'Appending hisi-3518-camera.dtb'
-	@cat arch/arm/boot/zImage arch/arm/boot/dts/hisi-3518-camera.dtb > arch/arm/boot/zImage.tmp
+	@$(kecho) 'Appending $(DTB_FILE).dtb'
+	@cat arch/arm/boot/zImage arch/arm/boot/dts/$(DTB_FILE).dtb > arch/arm/boot/zImage.tmp
 	@mv arch/arm/boot/zImage.tmp arch/arm/boot/zImage
 	@$(kecho) '  Kernel: $@ is ready'
 

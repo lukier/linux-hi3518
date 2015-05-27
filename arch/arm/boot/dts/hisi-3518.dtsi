@@ -9,7 +9,106 @@
  */
 
 #include "skeleton.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/clock/hi3518-clock.h>
+
+#define MUXCTRL_REG0 0x000
+#define MUXCTRL_REG1 0x004
+#define MUXCTRL_REG2 0x008
+#define MUXCTRL_REG3 0x00C
+#define MUXCTRL_REG4 0x010
+#define MUXCTRL_REG5 0x014
+#define MUXCTRL_REG6 0x018
+#define MUXCTRL_REG7 0x01C
+#define MUXCTRL_REG8 0x020
+#define MUXCTRL_REG9 0x024
+#define MUXCTRL_REG10 0x028
+#define MUXCTRL_REG11 0x02C
+#define MUXCTRL_REG12 0x030
+#define MUXCTRL_REG13 0x034
+#define MUXCTRL_REG14 0x038
+#define MUXCTRL_REG15 0x03C
+#define MUXCTRL_REG16 0x040
+#define MUXCTRL_REG17 0x044
+#define MUXCTRL_REG18 0x048
+#define MUXCTRL_REG19 0x04C
+#define MUXCTRL_REG20 0x050
+#define MUXCTRL_REG21 0x054
+#define MUXCTRL_REG22 0x058
+#define MUXCTRL_REG23 0x05C
+#define MUXCTRL_REG24 0x060
+#define MUXCTRL_REG25 0x064
+#define MUXCTRL_REG26 0x068
+#define MUXCTRL_REG27 0x06C
+#define MUXCTRL_REG28 0x070
+#define MUXCTRL_REG29 0x074
+#define MUXCTRL_REG30 0x078
+#define MUXCTRL_REG31 0x07C
+#define MUXCTRL_REG32 0x080
+#define MUXCTRL_REG33 0x084
+#define MUXCTRL_REG34 0x088
+#define MUXCTRL_REG35 0x08C
+#define MUXCTRL_REG36 0x090
+#define MUXCTRL_REG37 0x094
+#define MUXCTRL_REG38 0x098
+#define MUXCTRL_REG39 0x09C
+#define MUXCTRL_REG40 0x0A0
+#define MUXCTRL_REG41 0x0A4
+#define MUXCTRL_REG42 0x0A8
+#define MUXCTRL_REG43 0x0AC
+#define MUXCTRL_REG44 0x0B0
+#define MUXCTRL_REG45 0x0B4
+#define MUXCTRL_REG46 0x0B8
+#define MUXCTRL_REG47 0x0BC
+#define MUXCTRL_REG48 0x0C0
+#define MUXCTRL_REG49 0x0C4
+#define MUXCTRL_REG50 0x0C8
+#define MUXCTRL_REG51 0x0CC
+#define MUXCTRL_REG52 0x0D0
+#define MUXCTRL_REG53 0x0D4
+#define MUXCTRL_REG54 0x0D8
+#define MUXCTRL_REG55 0x0DC
+#define MUXCTRL_REG56 0x0E0
+#define MUXCTRL_REG57 0x0E4
+#define MUXCTRL_REG58 0x0E8
+#define MUXCTRL_REG59 0x0EC
+#define MUXCTRL_REG60 0x0F0
+#define MUXCTRL_REG61 0x0F4
+#define MUXCTRL_REG62 0x0F8
+#define MUXCTRL_REG63 0x0FC
+#define MUXCTRL_REG64 0x100
+#define MUXCTRL_REG65 0x104
+#define MUXCTRL_REG66 0x108
+#define MUXCTRL_REG67 0x10C
+#define MUXCTRL_REG68 0x110
+#define MUXCTRL_REG69 0x114
+#define MUXCTRL_REG70 0x118
+#define MUXCTRL_REG71 0x11C
+#define MUXCTRL_REG72 0x120
+#define MUXCTRL_REG73 0x124
+#define MUXCTRL_REG74 0x128
+#define MUXCTRL_REG75 0x12C
+#define MUXCTRL_REG76 0x130
+#define MUXCTRL_REG77 0x134
+#define MUXCTRL_REG78 0x138
+#define MUXCTRL_REG79 0x13C
+#define MUXCTRL_REG80 0x140
+#define MUXCTRL_REG81 0x144
+#define MUXCTRL_REG82 0x148
+#define MUXCTRL_REG83 0x14C
+#define MUXCTRL_REG84 0x150
+#define MUXCTRL_REG85 0x154
+#define MUXCTRL_REG86 0x158
+#define MUXCTRL_REG87 0x15C
+#define MUXCTRL_REG88 0x160
+#define MUXCTRL_REG89 0x164
+#define MUXCTRL_REG90 0x168
+#define MUXCTRL_REG91 0x16C
+#define MUXCTRL_REG92 0x170
+#define MUXCTRL_REG93 0x174
+#define MUXCTRL_REG94 0x178
 
 / {
     aliases {
@@ -54,31 +153,29 @@
             #clock-cells = <1>;
         };
         
-        apb_fixed: clock_apb_fixed {
+        clk_apb: clock_apb_fixed {
             compatible = "fixed-clock";
             #clock-cells = <0>;
-            clock-frequency = <110000000>; /* 110 MHz , 440/4 */
+            clock-frequency = <100000000>; 
             clock-output-names = "apb_pclk";
         };
         
-        xtal24mhz: xtal24mhz@24M {
+        clk_xtal: clock_xtal_fixed {
             #clock-cells = <0>;
             compatible = "fixed-clock";
             clock-frequency = <24000000>;
         };
         
-        timclk: timclk@1M {
-            #clock-cells = <0>;
-            compatible = "fixed-factor-clock";
-            clock-div = <24>;
-            clock-mult = <1>;
-            clocks = <&xtal24mhz>;
-        };
-        
-        pclk: pclk@0 {
+        clk_uart: clock_uart_fixed {
             #clock-cells = <0>;
             compatible = "fixed-clock";
-            clock-frequency = <0>;
+            clock-frequency = <3000000>;
+        };
+        
+        clk_eth: clock_eth_fixed {
+            #clock-cells = <0>;
+            compatible = "fixed-clock";
+            clock-frequency = <50000000>;
         };
     };
 
@@ -88,7 +185,6 @@
         #size-cells = <1>;
         compatible = "simple-bus";
         interrupt-parent = <&vic0>;
-        /*ranges = <0 0xf8000000 0x8000000>;*/
         ranges;
 
         amba {
@@ -101,11 +197,8 @@
                 compatible = "arm,sp804", "arm,primecell";
                 reg = <0x20000000 0x10000>;
                 interrupts = <3>;
-                /* clocks = <&clock HI3518_NONE_CLOCK>; 
-                clocks = <&apb_fixed>;
-                clock-names = "apb_pclk";*/
-                clocks = <&timclk>, <&timclk>, <&pclk>;
-                clock-names = "timer1", "timer2", "apb_pclk";
+                clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 status = "okay";
             };
 
@@ -113,7 +206,7 @@
                 compatible = "arm,sp804", "arm,primecell";
                 reg = <0x20010000 0x10000>;
                 interrupts = <4>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 clock-names = "apb_pclk";
                 status = "disabled";
             };
@@ -122,12 +215,8 @@
                 compatible = "arm,pl011", "arm,primecell";
                 reg = <0x20080000 0x10000>;
                 interrupts = <5>;
-                /*
-                clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
-                */
-                clocks = <&apb_fixed>;
-                /*clock-names = "apb_pclk";*/
+                clocks = <&clk_uart>, <&clk_apb>;
+                clock-names = "uartclk", "apb_pclk";
                 status = "okay";
             };
 
@@ -135,8 +224,8 @@
                 compatible = "arm,pl011", "arm,primecell";
                 reg = <0x20090000 0x10000>;
                 interrupts = <5>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
+                clocks = <&clk_uart>, <&clk_apb>;
+                clock-names = "uartclk", "apb_pclk";
                 status = "disabled";
             };
 
@@ -144,8 +233,8 @@
                 compatible = "arm,pl011", "arm,primecell";
                 reg = <0x200A0000 0x10000>;
                 interrupts = <25>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
+                clocks = <&clk_uart>, <&clk_apb>;
+                clock-names = "uartclk", "apb_pclk";
                 status = "disabled";
             };
 
@@ -156,7 +245,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -169,7 +257,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -182,7 +269,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -195,7 +281,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -208,7 +293,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -221,7 +305,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -234,7 +317,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -247,7 +329,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -260,7 +341,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -273,7 +353,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -286,7 +365,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -299,7 +377,6 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -311,45 +388,43 @@
                 reg = <0xa2c000 0x10000>;
                 interrupts = <1>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 status = "disabled";
             };
-            
+            /*
             dmac: dma-controller@100D0000 {
                 compatible = "arm,pl081", "arm,primecell";
                 reg = <0x100D0000 0x10000>;
                 interrupts = <14>;
                 clocks = <&clock HI3518_NONE_CLOCK>;
-                clock-names = "apb_pclk";
                 #dma-cells = <1>;
                 dma-channels = <4>;
                 dma-requests = <16>;
                 status = "disabled";
             };
             
-            spi0: spi@0x200C0000 {
+            spi0: spi@200C0000 {
                 compatible = "arm,pl022", "arm,primecell";
                 reg = <0x200C0000 0x10000>;
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <6>;
                 dmas = <&dmac 14>, <&dmac 15>;
-                dma-names = "rx", "tx";
                 status = "disabled";
             };
             
-            spi1: spi@0x200E0000 {
+            spi1: spi@200E0000 {
                 compatible = "arm,pl022", "arm,primecell";
                 reg = <0x200E0000 0x10000>;
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <7>;
                 dmas = <&dmac 12>, <&dmac 13>;
-                dma-names = "rx", "tx";
                 status = "disabled";
             };
+            */
         };
 
+        /*
         sysctrl: system-controller@20050000 {
             compatible = "hisilicon,sysctrl", "syscon";
             reg = <0x20050000 0x10000>;
@@ -357,7 +432,79 @@
             #address-cells = <1>;
             #size-cells = <1>;
         };
-
+        
+        
+        pio: pinctrl@200F0000 {
+            compatible = "hisilicon,hi3518-pinctrl";
+            reg = <0x200F0000 0x10000>, <0x20050000 0x10000>;
+            clocks = <&clk_apb>;
+            
+            gpio-controller;
+            interrupt-controller;
+            #interrupt-cells = <2>;
+            #size-cells = <0>;
+            #gpio-cells = <3>;
+        };
+        */
+        pmx0: pinmux@200F0000 {
+            compatible = "pinctrl-single";
+            reg = <0x200F0000 0x10000>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            
+            pinctrl-single,register-width = <32>;
+            pinctrl-single,function-mask = <0x7>;
+            
+            ethernet_pins: pinmux_ethernet_pins  {
+                pinctrl-single,pins = <MUXCTRL_REG16 1 /* MII_RXD1 */ 
+                                       MUXCTRL_REG17 1 /* MII_RXD0 */ 
+                                       MUXCTRL_REG20 1 /* MII_TXD1 */ 
+                                       MUXCTRL_REG21 1 /* MII_TXD0 */ 
+                                       MUXCTRL_REG23 3 /* RMII_CLK */ 
+                                       MUXCTRL_REG24 1 /* MII_RXDV */ 
+                                       MUXCTRL_REG25 1 /* MII_TXEN */ 
+                                       MUXCTRL_REG26 1 /* MII_TXER */ 
+                                       MUXCTRL_REG27 1 /* MII_RXER */ 
+                                       MUXCTRL_REG29 1 /* MDCK */
+                                       MUXCTRL_REG30 1 /* MDIO */>;
+            };
+        };
+        
+        ethernet: ether@10090000 {
+            compatible = "hisilicon,hieth-mac";
+            reg = <0x10090000 0x10000>;
+            
+            clocks = <&clk_eth>;
+            
+            interrupts = <12>;
+            
+            pinctrl-names = "default";
+            pinctrl-0 = <&ethernet_pins>;
+            
+            phy-handle = <&ethphy>;
+            phy-mode = "rmii";
+            
+            mac-address = [00 12 12 94 21 4B];
+            status = "okay";
+        };
+        
+        mdio: mdio@10090000 {
+            compatible = "hisilicon,hieth-mdio";
+            reg = <0x10091100 0x14>;
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+            
+            reset-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+            reset-gpio-names = "nreset";
+            
+            ethphy: ethernet-phy@0 {
+                compatible = "ethernet-phy-ieee802.3-c22";
+                reg = <1>;
+            };
+        };
+        
+/*
         usb0: ehci@100B0000 {
             compatible = "generic-ehci";
             reg = <0x100B0000 0x10000>;
@@ -372,14 +519,6 @@
             interrupts = <16>;
             clocks = <&clock HI3518_NONE_CLOCK>;
             status = "disabled";
-        };
-        
-        pio: pinctrl@200F0000 {
-            compatible = "hisilicon,hi3518-pinctrl";
-            reg = <0x200F0000 0x10000>;
-            clocks = <&clock HI3518_NONE_CLOCK>;
-            #size-cells = <0>;
-            #gpio-cells = <3>;
         };
         
         ir: ir@20070000 {
@@ -405,10 +544,9 @@
             reg = <0x10020000 0x10000>;
             interrupts = <18>;
             clocks = <&clock HI3518_NONE_CLOCK>, <&clock HI3518_NONE_CLOCK>;
-            clock-names = "ciu","biu";
             status = "disabled";
         };
-        
+        */
         /*
          * TODO:
          * HiETH

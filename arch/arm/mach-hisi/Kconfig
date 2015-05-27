@@ -3,9 +3,6 @@ config ARCH_HISI
 	depends on ARCH_MULTI_V7 || ARCH_MULTI_V5
 	select ARM_AMBA
 	select ARM_TIMER_SP804
-	select POWER_RESET
-	select POWER_RESET_HISI
-	select POWER_SUPPLY
 
 if ARCH_HISI
 
@@ -19,6 +16,9 @@ config ARCH_HI3xxx
 	select HAVE_ARM_TWD if SMP
 	select PINCTRL
 	select PINCTRL_SINGLE
+	select POWER_RESET
+	select POWER_RESET_HISI
+	select POWER_SUPPLY
 	help
 	  Support for Hisilicon Hi36xx SoC family
 	  
@@ -36,6 +36,9 @@ config ARCH_HIP01
     select HAVE_ARM_SCU if SMP
     select HAVE_ARM_TWD if SMP
     select ARM_GLOBAL_TIMER
+	select POWER_RESET
+	select POWER_RESET_HISI
+	select POWER_SUPPLY
     help
       Support for Hisilicon HIP01 SoC family
 
@@ -46,6 +49,9 @@ config ARCH_HIP04
 	select HAVE_ARM_ARCH_TIMER
 	select MCPM if SMP
 	select MCPM_QUAD_CLUSTER if SMP
+	select POWER_RESET
+	select POWER_RESET_HISI
+	select POWER_SUPPLY
 	help
 	  Support for Hisilicon HiP04 SoC family
 
@@ -57,6 +63,9 @@ config ARCH_HIX5HD2
 	select HAVE_ARM_TWD if SMP
 	select PINCTRL
 	select PINCTRL_SINGLE
+	select POWER_RESET
+	select POWER_RESET_HISI
+	select POWER_SUPPLY
 	help
 	  Support for Hisilicon HIX5HD2 SoC family
 endmenu
