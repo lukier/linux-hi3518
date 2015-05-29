@@ -1,11 +1,9 @@
 /*
- * Copyright (c) 2015 Robert Lukierski.
  * Copyright (c) 2012-2013 Hisilicon Limited.
  * Copyright (c) 2012-2013 Linaro Limited.
  *
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
- *	       Xin Li <li.xin@linaro.org>
- *         Robert Lukierski <robert@lukierski.eu>
+ *	   Xin Li <li.xin@linaro.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -1,5 +1,5 @@
 /*
- * Hisilicon Hi3620 clock driver
+ * Hisilicon Hi3518 clock driver
  *
  * Copyright (c) 2015 Robert Lukierski.
  * Copyright (c) 2012-2013 Hisilicon Limited.
