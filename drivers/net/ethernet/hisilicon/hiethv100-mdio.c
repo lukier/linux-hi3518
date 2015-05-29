@@ -1,11 +1,9 @@
 /*
- * Allwinner EMAC MDIO interface driver
+ * HiSilicon Hi3518 ETH MDIO interface driver
  *
- * Copyright 2012-2013 Stefan Roese <sr@denx.de>
- * Copyright 2013 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright 2015 Robert Lukierski <robert@lukierski.eu>
  *
- * Based on the Linux driver provided by Allwinner:
- * Copyright (C) 1997  Sten Wang
+ * Copyright (C) 2015 Robert Lukierski
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
@@ -205,6 +203,8 @@ static int hieth_mdio_probe(struct platform_device *pdev)
 		goto err_out_disable_regulator;
 
 	platform_set_drvdata(pdev, bus);
+    
+    printk(KERN_INFO "LUKIER HIETH MDIO PROBE OK\n");
 
 	return 0;
 

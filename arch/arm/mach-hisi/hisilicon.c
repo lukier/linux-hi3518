@@ -59,10 +59,11 @@ MACHINE_END
 
 static const char *const hi3518_compat[] __initconst = {
     "hisilicon,hi3518",
+    "hisilicon,hi3516",
     NULL,
 };
 
-DT_MACHINE_START(HI3518, "Hisilicon Hi3518 (Flattened Device Tree)")
+DT_MACHINE_START(HI3518, "Hisilicon Hi3516/Hi3518 (Flattened Device Tree)")
     .dt_compat  = hi3518_compat,
 MACHINE_END
 
