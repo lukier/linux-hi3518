@@ -34,8 +34,6 @@ MODULE_PARM_DESC(watchdog, "transmit timeout in milliseconds");
 
 static void hieth_link_changed(struct hieth_device *hdev)
 {
-    dev_info(hdev->dev, "LUKIER: %s LINK CHANGED %i %i %i\n", __PRETTY_FUNCTION__, hdev->link, hdev->duplex, hdev->speed);
-    
     if (hdev->duplex == DUPLEX_FULL) {
         set_bit(0, hdev->membase + HIETH_REG_UD_MAC_PORTSET);
     } else {
@@ -55,10 +53,8 @@ static void hieth_handle_link_change(struct net_device *dev)
 {
     struct hieth_device *hdev = netdev_priv(dev);
     struct phy_device *phydev = hdev->phy_dev;
-    unsigned long flags;
     bool status_change = false;
-    
-    //dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
+    unsigned long flags = 0;
     
     spin_lock_irqsave(&hdev->lock, flags);
     
@@ -82,43 +78,29 @@ static void hieth_handle_link_change(struct net_device *dev)
         status_change = true;
     }
     
-    spin_unlock_irqrestore(&hdev->lock, flags);
-    
     if (status_change)
     {
         hieth_link_changed(hdev);
         phy_print_status(phydev);
     }
+    
+    spin_unlock_irqrestore(&hdev->lock, flags);
 }
 
 static void hieth_power(struct hieth_device *hdev, bool enabled)
 {
-    unsigned long flags = 0;
-    
-    spin_lock_irqsave(&hdev->lock, flags);
-    
     _hieth_core_clock(hdev, enabled);
-    
-    spin_unlock_irqrestore(&hdev->lock, flags);
 }
 
 static void hieth_reset(struct hieth_device *hdev)
 {
-    unsigned long flags = 0;
-    
-    spin_lock_irqsave(&hdev->lock, flags);
-    
     _hieth_core_reset(hdev);
     _hieth_soft_reset(hdev);
-    
-    spin_unlock_irqrestore(&hdev->lock, flags);
 }
 
 static int hieth_init(struct hieth_device *hdev)
-{
-    unsigned long flags = 0;
-    
-    spin_lock_irqsave(&hdev->lock, flags);
+{  
+    int i = 0;
     
     /* Endian mode */
     _hieth_set_endian(hdev, true, true);
@@ -136,7 +118,7 @@ static int hieth_init(struct hieth_device *hdev)
     _hieth_int_clear(hdev, HIETH_FLAG_INT_MASK);
     
     /* Disable interrupts */
-    _hieth_int_enable_up_control(hdev, false); // ien_up
+    _hieth_int_enable_up_control(hdev, false); 
     _hieth_int_disable(hdev, HIETH_FLAG_INT_MASK);
     
     /* Disable VLAN functionality */
@@ -148,25 +130,48 @@ static int hieth_init(struct hieth_device *hdev)
     /* Disable MAC filter */
     clear_bit(7, hdev->membase + HIETH_REG_GLB_MACTCTRL);
     
+    /* Do not discard packets */
+    iowrite32(0x00, hdev->membase + HIETH_REG_UD_GLB_FC_DROPCTRL);
+    
+    /* No traffic limits */
+    iowrite32(0x00000000, hdev->membase + HIETH_REG_UD_GLB_FC_RXLIMIT);
+    
+    /* No traffic control timer */
+    iowrite32(0x00000000, hdev->membase + HIETH_REG_UD_GLB_FC_TIMECTRL);
+    
     /* Minimum number of packets = 1 */
-    iowrite32(0x100003A, hdev->membase + HIETH_REG_UD_GLB_IRQN_SET);
+    //NOTE iowrite32(0x100003A, hdev->membase + HIETH_REG_UD_GLB_IRQN_SET);
     
     /* Enable UpEther<->CPU */
     set_bit(5, hdev->membase + HIETH_REG_GLB_FWCTRL); // fw2cpu_ena_up
     set_bit(7, hdev->membase + HIETH_REG_GLB_FWCTRL); // fwall2cpu_up
     set_bit(5, hdev->membase + HIETH_REG_GLB_MACTCTRL); // broad2cpu_up
+    set_bit(3, hdev->membase + HIETH_REG_GLB_MACTCTRL); // multi2cpu_up
+    set_bit(1, hdev->membase + HIETH_REG_GLB_MACTCTRL); // uni2cpu_up
+    
+    /* Reset queues */
+    _hieth_soft_reset(hdev);
     
     /* Set RX/TX queues */
-    _hieth_queue_depth_set(hdev, 1, 1); // FIXME
-    printk(KERN_INFO "LUKIER: QueueRegister: 0x%04X\n", ioread32(hdev->membase + HIETH_REG_UD_GLB_QLEN_SET));
+    _hieth_queue_depth_set(hdev, HIETH_MAX_QUEUE_DEPTH_RX, HIETH_MAX_QUEUE_DEPTH_TX);
     
-    /* Set RX buffer */
-    _hieth_set_receive_buffer(hdev, hdev->rxbuffer);
+    hdev->rx_buffer_cur = 0;
+    hdev->tx_buffer_cur = 0;
     
-    hdev->rxlen = 0;
-    hdev->skb_in_flight = 0;
+    /* Push initial RX buffers */
+    for(i = 0 ; i < HIETH_MAX_QUEUE_DEPTH_RX ; ++i)
+    {
+        _hieth_set_receive_buffer(hdev, hdev->rxbuffers[i]);
+        ++hdev->rx_buffer_cur;
+    }
     
-    spin_unlock_irqrestore(&hdev->lock, flags);
+    /* Clear interrupts */
+    _hieth_int_clear(hdev, HIETH_FLAG_INT_MASK);
+    
+    /* enable receive */
+    _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP);
+    _hieth_int_enable_up_control(hdev, true);
+    _hieth_int_enable_all_control(hdev, true);
     
     return 0;
 }
@@ -184,8 +189,6 @@ static int hieth_get_settings(struct net_device *dev, struct ethtool_cmd *cmd)
     struct hieth_device *hdev = netdev_priv(dev);
     struct phy_device *phydev = hdev->phy_dev;
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     if (!phydev)
         return -ENODEV;
     
@@ -196,8 +199,6 @@ static int hieth_set_settings(struct net_device *dev, struct ethtool_cmd *cmd)
 {
     struct hieth_device *hdev = netdev_priv(dev);
     struct phy_device *phydev = hdev->phy_dev;
-    
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
     
     if (!phydev)
         return -ENODEV;
@@ -217,8 +218,6 @@ static int hieth_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
     struct hieth_device *hdev = netdev_priv(ndev);
     struct phy_device *phydev = hdev->phy_dev;
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     if (!netif_running(ndev))
         return -EINVAL;
     
@@ -231,11 +230,7 @@ static int hieth_ioctl(struct net_device *ndev, struct ifreq *rq, int cmd)
 static int hieth_set_mac_address(struct net_device *ndev, void *p)
 {
     struct sockaddr *addr = p;
-    struct hieth_device *hdev = netdev_priv(ndev);
     int ret = 0;
-    unsigned long flags;
-    
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
     
     if (!is_valid_ether_addr(addr->sa_data))
         return -EADDRNOTAVAIL;
@@ -245,11 +240,7 @@ static int hieth_set_mac_address(struct net_device *ndev, void *p)
     
     memcpy(ndev->dev_addr, addr->sa_data, ETH_ALEN);
     
-    spin_lock_irqsave(&hdev->lock, flags);
-    
     ret = _hieth_set_mac_address_internal(ndev, addr->sa_data);
-    
-    spin_unlock_irqrestore(&hdev->lock, flags);
     
     return ret;
 }
@@ -257,70 +248,53 @@ static int hieth_set_mac_address(struct net_device *ndev, void *p)
 static int hieth_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 {
     struct hieth_device *hdev = netdev_priv(ndev);
-    
-    spin_lock(&hdev->lock);
-    
-    memcpy(hdev->txbuffer, skb->data, skb->len);
-    
-    _hieth_transmit_frame(hdev, hdev->txbuffer, skb->len);
-    
-    hdev->skb_in_flight = skb_get(skb);
-    
-    netif_stop_queue(ndev);
-    
-    /* enable */
-    _hieth_int_enable(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
-    
-    spin_unlock(&hdev->lock);
-    
-    //dev_info(hdev->dev, "LUKIER: %s LEN %i\n", __PRETTY_FUNCTION__, skb->len);
-    
-    dev_kfree_skb(skb);
-
-    return NETDEV_TX_OK;
-}
-
-static void hieth_bfproc_recv(unsigned long data)
-{
+    unsigned long flags = 0;
     int ret = 0;
-    struct net_device *ndev = (void *)data;
-    struct hieth_device *hdev = netdev_priv(ndev);
-    struct sk_buff *skb;
-    u8* prdbuf;
-    u8* org_data = _hieth_get_rx_frame_addr(hdev);
     
-    //printk(KERN_INFO "LUKIER RXBUF 0x%04X vs 0x%04X\n", (uint32_t)hdev->rxbuffer, (uint32_t)org_data);
+    spin_lock_irqsave(&hdev->lock, flags);
     
-    spin_lock(&hdev->lock);
-    
-    skb = dev_alloc_skb(hdev->rxlen);
-    prdbuf = skb_put(skb, hdev->rxlen);
-    
-    /* Copy packet from buffer */
-    memcpy(prdbuf, hdev->rxbuffer, hdev->rxlen);
-    
-    /* Pass to upper layer */
-    skb->protocol = eth_type_trans(skb, ndev);
-    netif_rx(skb);
-    
-    /* Set RX buffer */
-    _hieth_set_receive_buffer(hdev, hdev->rxbuffer);
-    
-    //dev_info(hdev->dev, "LUKIER: RX TASKLET DONE %i\n", hdev->rxlen);
-    
-    hdev->rxlen = 0;
-    
-    /* disable */
-    _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP);
-    
-    spin_unlock(&hdev->lock);
-}
+    /* Notify core */
+    _hieth_int_clear(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
 
-static void hieth_set_rx_mode(struct net_device *ndev)
-{
-    struct hieth_device *hdev = netdev_priv(ndev);
+    /* Can transmit more */
+    if(_hieth_tx_queue_ready(hdev) == true)  {
+        
+        ret = skb->len;
+        
+        /* copy */
+        memcpy(hdev->txbuffers[hdev->tx_buffer_cur], skb->data, skb->len);
+        
+        /* transmit, extra 4 bytes for CRC */
+        _hieth_transmit_frame(hdev, hdev->txbuffers[hdev->tx_buffer_cur], skb->len + 4);
+        
+        /* increment / wrap around */
+        ++hdev->tx_buffer_cur;
+        if(hdev->tx_buffer_cur >= HIETH_MAX_QUEUE_DEPTH_TX) {
+            hdev->tx_buffer_cur = 0;
+        }
+        
+        /* consume SKB */
+        dev_kfree_skb_irq(skb);    
+        
+        //dev_info(hdev->dev, "LUKIER: %s TX START %i = %i bytes\n", __PRETTY_FUNCTION__, hdev->tx_buffer_cur, ret);
+        
+        ret = NETDEV_TX_OK;
+    }
+    else {
+        /* Stop incoming packets */
+        netif_stop_queue(ndev);
+        
+        /* enable TX QUEUE INT */
+        _hieth_int_enable(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
+        
+        //dev_info(hdev->dev, "LUKIER: %s TX FULL WAIT %i\n", __PRETTY_FUNCTION__, hdev->tx_buffer_cur);
+        
+        ret = -EAGAIN;
+    }
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
+    spin_unlock_irqrestore(&hdev->lock, flags);
+    
+    return ret;
 }
 
 static irqreturn_t hieth_interrupt(int irq, void *dev_id)
@@ -329,165 +303,123 @@ static irqreturn_t hieth_interrupt(int irq, void *dev_id)
     struct hieth_device *hdev = netdev_priv(ndev);
     unsigned int ints = 0;
 
-#if 0    
-    spin_lock(&hdev->lock);
-
     /* Get INT status */
     ints = _hieth_int_status(hdev);
     
-    dev_info(hdev->dev, "LUKIER: %s INTSTAT 0x%04X\n", __PRETTY_FUNCTION__, ints);
-    
-    if(ints & HIETH_FLAG_INT_RXD_UP != 0) {
-        hdev->rx_int = 1;
-    } else {
-        hdev->rx_int = 0;
+    /* RX */
+    if((ints & HIETH_FLAG_INT_RXD_UP) != 0) {
+        
+        /* Clear this one */
+        _hieth_int_clear(hdev, HIETH_FLAG_INT_RXD_UP);
+        ints &= ~HIETH_FLAG_INT_RXD_UP;
+        
+        if (likely(napi_schedule_prep(&hdev->napi))) {
+            /* Don't need that now */
+            _hieth_int_disable(hdev, HIETH_FLAG_INT_RXD_UP);
+            
+            //dev_info(hdev->dev, "LUKIER: %s RX NEED WORK %i\n", __PRETTY_FUNCTION__, hdev->rx_buffer_cur);
+            __napi_schedule(&hdev->napi);
+        }
     }
     
-    if(ints & HIETH_FLAG_INT_TX_UP != 0) {
-        hdev->tx_done_int = 1;
-    } else {
-        hdev->tx_done_int = 0;
+    /* TX */
+    if((ints & HIETH_FLAG_INT_TXQUEUE_UP) != 0) {
+        
+        /* Clear this one */
+        _hieth_int_clear(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
+        ints &= ~HIETH_FLAG_INT_TXQUEUE_UP;
+        
+        //dev_info(hdev->dev, "LUKIER: %s TX HANDLE %i\n", __PRETTY_FUNCTION__, hdev->tx_buffer_cur);
+        
+        /* Got space now? */    
+        if (unlikely(netif_queue_stopped(hdev->ndev) && (_hieth_tx_queue_ready(hdev) == true))) {
+            
+            netif_tx_lock(hdev->ndev);
+            
+            /* Got space now? - double locking */
+            if (netif_queue_stopped(hdev->ndev) && (_hieth_tx_queue_ready(hdev) == true)) {
+                
+                //dev_info(hdev->dev, "LUKIER: %s TX DONE, OK MORE %i\n", __PRETTY_FUNCTION__, hdev->tx_buffer_cur);
+                
+                /* Can accept more packets */
+                netif_wake_queue(hdev->ndev);
+                
+                /* Don't need that now */
+                _hieth_int_disable(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
+            }
+            
+            netif_tx_unlock(hdev->ndev);
+        } 
     }
     
     /* Clear interrupts */
-    _hieth_int_clear(hdev, ints);
-    
-    /* Disable INT */
-    _hieth_int_disable(hdev, HIETH_FLAG_INT_RXD_UP | HIETH_FLAG_INT_TX_UP);
-    _hieth_int_enable_up_control(hdev, false);
-    _hieth_int_enable_all_control(hdev, false);
-    
-    /* Notify NAPI */
-    if (likely(napi_schedule_prep(&hdev->napi)))
-        __napi_schedule(&hdev->napi);
-    
-    spin_unlock(&hdev->lock);
-#endif
-
-    /* Mask all interrupts */
-    _hieth_int_enable_all_control(hdev, false);
-    
-    spin_lock_irq(&hdev->lock);
-    
-    /* Read INT status */
-    ints = _hieth_int_status(hdev);
-    
-    //dev_info(hdev->dev, "LUKIER: %s 0x%02X\n", __PRETTY_FUNCTION__, ints);
-    
-    /* RX interrupt */
-    if((ints & HIETH_FLAG_INT_RXD_UP)) {
-        if((_hieth_int_rawstatus(hdev) & HIETH_FLAG_INT_RX_UP) != 0) {
-            hdev->rxlen = _hieth_get_received_info(hdev, 0) - 4;
-            
-            //dev_info(hdev->dev, "LUKIER: INT RXD Received %i\n", hdev->rxlen);
-            
-            /* clear to notify */
-            _hieth_int_clear(hdev, HIETH_FLAG_INT_RX_UP | HIETH_FLAG_INT_RXD_UP);
-            
-            /* bottom half */
-            tasklet_schedule(&hdev->task_recv);
-            
-            /* disable */
-            _hieth_int_disable(hdev, HIETH_FLAG_INT_RXD_UP);
-        }
-        
-        ints &= ~(HIETH_FLAG_INT_RXD_UP | HIETH_FLAG_INT_RX_UP);
-    }
-    
-    /* TX done interrupt */
-    if((ints & HIETH_FLAG_INT_TXQUEUE_UP)) {
-        //dev_info(hdev->dev, "LUKIER: INT TX DONE\n");
-        
-        dev_kfree_skb_irq(hdev->skb_in_flight);
-        hdev->skb_in_flight = 0;
-        
-        /* wake queue */
-        netif_wake_queue(ndev);
-        
-        /* clear */
-        _hieth_int_clear(hdev, HIETH_FLAG_INT_TXQUEUE_UP | HIETH_FLAG_INT_TX_UP);
-
-        /* disable */
-        _hieth_int_disable(hdev, HIETH_FLAG_INT_TXQUEUE_UP);
-        
-        ints &= ~(HIETH_FLAG_INT_TXQUEUE_UP | HIETH_FLAG_INT_TX_UP);
-    }
-    
-    if (unlikely(ints)) {
-        dev_err(hdev->dev, "unknown ints=0x%.8x\n", ints);
+    if(ints != 0) {
+        //dev_info(hdev->dev, "LUKIER: %s CLEARING REMAIN 0x%04X\n", __PRETTY_FUNCTION__, ints);
         _hieth_int_clear(hdev, ints);
     }
-    
-    spin_unlock_irq(&hdev->lock);
-    
-    /* Unmask the all interrupt */
-    _hieth_int_enable_all_control(hdev, true);
 
     return IRQ_HANDLED;
-}
-
-#if 0
-static void _hieth_handle_xmit(struct net_device *ndev)
-{
-    struct hieth_device *hdev = netdev_priv(ndev);
-    u32 txcidx, *ptxstat, txstat;
-    unsigned long flags = 0;
-    
-    spin_lock_irqsave(&hdev->lock, flags);
-    
-    if(hdev->tx_done_int == 1)
-    {
-        if (netif_queue_stopped(ndev))
-            netif_wake_queue(ndev);
-        
-        dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-        
-        hdev->tx_done_int = 0;
-    }
-    
-    spin_unlock_irqrestore(&hdev->lock, flags);
 }
 
 static int _hieth_handle_recv(struct net_device *ndev, int budget)
 {
     struct hieth_device *hdev = netdev_priv(ndev);
-    struct sk_buff *skb;
-    unsigned long flags = 0;
-    u8 *prdbuf = 0;
-    int rx_done = 0;
-    unsigned int idx = 0;
-    unsigned int len = 0;
+    unsigned int raw_status = 0;
+    unsigned int rx_done = 0;
     
-    spin_lock_irqsave(&hdev->lock, flags);
-    
-    if(hdev->rx_int == 1)
+    while(1)
     {
-        len = _hieth_get_received_info(hdev, &idx);
+        if(rx_done >= HIETH_NAPI_WEIGHT - 1) { break; }
         
-        skb = dev_alloc_skb(len);
-        prdbuf = skb_put(skb, len);
+        raw_status = _hieth_int_rawstatus(hdev);
         
-        /* Copy packet from buffer */
-        memcpy(prdbuf, hdev->rxbuffer, len);
+        //dev_info(hdev->dev, "LUKIER: %s RX TRIES WORK %i 0x%04X\n", __PRETTY_FUNCTION__, hdev->rx_buffer_cur, raw_status);
         
-        /* Pass to upper layer */
-        skb->protocol = eth_type_trans(skb, ndev);
-        netif_receive_skb(skb);
-        
-        _hieth_int_clear(hdev, HIETH_FLAG_INT_RXD_UP);
-        _hieth_int_clear(hdev, HIETH_FLAG_INT_RX_UP);
-        
-        /* Set RX buffer */
-        _hieth_set_receive_buffer(hdev, hdev->rxbuffer);
-        
-        rx_done = 1;
-        
-        dev_info(hdev->dev, "LUKIER: %s %i bytes / %i IDX\n", __PRETTY_FUNCTION__, len, idx);
-        
-        hdev->rx_int = 0;
+        if( ((raw_status & HIETH_FLAG_INT_RX_UP) != 0) || ((raw_status & HIETH_FLAG_INT_RXD_UP) != 0) )
+        {
+            /* Query incoming packet length & address */
+            unsigned int len = _hieth_get_received_info(hdev, NULL) - 4;
+            void* data = _hieth_get_rx_frame_addr(hdev);
+            
+            /* Allocate new SKB, +2 to make IP header L1 cache aligned */
+            struct sk_buff *skb = netdev_alloc_skb(ndev, len + 2);
+            
+            /* align IP header */
+            skb_reserve(skb, 2);
+            
+            /* Proper data size - make room */
+            skb_put(skb, len);
+            
+            /* Copy packet from buffer */
+            skb_copy_to_linear_data(skb, data, len);
+            
+            /* Pass to upper layer */
+            skb->protocol = eth_type_trans(skb, ndev);
+            netif_receive_skb(skb);
+            
+            /* Packets processed counter */
+            ++rx_done;
+            
+            //dev_info(hdev->dev, "LUKIER: %s RX DONE %i / %i = %i bytes\n", __PRETTY_FUNCTION__, hdev->rx_buffer_cur, rx_done, len);
+            
+            /* Notify core that we are done with this packet */
+            _hieth_int_clear(hdev, HIETH_FLAG_INT_RX_UP | HIETH_FLAG_INT_RXD_UP);
+            
+            /* Push more rx-buffers if possible */
+            while(_hieth_rx_queue_ready(hdev) == true) {
+                ++hdev->rx_buffer_cur;
+                if(hdev->rx_buffer_cur >= HIETH_MAX_QUEUE_DEPTH_RX) {
+                    hdev->rx_buffer_cur = 0;
+                }
+               _hieth_set_receive_buffer(hdev, hdev->rxbuffers[hdev->rx_buffer_cur]);
+            }
+        } else {
+            break;
+        }
     }
     
-    spin_unlock_irqrestore(&hdev->lock, flags);
+    /* Enable RX interrupts */
+    _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP);
 
     return rx_done;
 }
@@ -497,58 +429,80 @@ static int hieth_poll(struct napi_struct *napi, int budget)
     struct hieth_device *hdev = container_of(napi,struct hieth_device, napi);
     struct net_device *ndev = hdev->ndev;
     int rx_done = 0;
-    struct netdev_queue *txq = netdev_get_tx_queue(ndev, 0);
-    
-    __netif_tx_lock(txq, smp_processor_id());
-   _hieth_handle_xmit(ndev);
-    __netif_tx_unlock(txq);
     
     rx_done = _hieth_handle_recv(ndev, budget);
     
     if (rx_done < budget) {
         napi_complete(napi);
-        _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP | HIETH_FLAG_INT_TX_UP);
-        _hieth_int_enable_up_control(hdev, true);
-        _hieth_int_enable_all_control(hdev, true);
+        
+        /* enable RXD INT */
+        _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP);
     }
     
     return rx_done;
 }
-#endif
 
 static void hieth_timeout(struct net_device *ndev)
 {
     struct hieth_device *hdev = netdev_priv(ndev);
+    unsigned long flags = 0;
+    int i = 0;
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
+    spin_lock_irqsave(&hdev->lock, flags);
+    
+    /* Disable interrupts */
+    _hieth_int_enable_up_control(hdev, false); 
+    _hieth_int_disable(hdev, HIETH_FLAG_INT_MASK);
+    
+    /* Reset queues */
+    _hieth_soft_reset(hdev);
+    
+    /* Set RX/TX queues */
+    _hieth_queue_depth_set(hdev, HIETH_MAX_QUEUE_DEPTH_RX, HIETH_MAX_QUEUE_DEPTH_TX);
+    
+    hdev->rx_buffer_cur = 0;
+    hdev->tx_buffer_cur = 0;
+    
+    /* Push initial RX buffers */
+    for(i = 0 ; i < HIETH_MAX_QUEUE_DEPTH_RX ; ++i)
+    {
+        _hieth_set_receive_buffer(hdev, hdev->rxbuffers[i]);
+        ++hdev->rx_buffer_cur;
+    }
+    
+    /* Clear interrupts */
+    _hieth_int_clear(hdev, HIETH_FLAG_INT_MASK);
+    
+    /* enable receive */
+    _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP);
+    _hieth_int_enable_up_control(hdev, true);
+    _hieth_int_enable_all_control(hdev, true);
+    
+    spin_unlock_irqrestore(&hdev->lock, flags);
 }
 
 static int hieth_open(struct net_device *ndev)
 {
     struct hieth_device *hdev = netdev_priv(ndev);
-    unsigned long flags = 0;
     int ret = 0;
+    unsigned long flags = 0;
     
-    /* init tasklet */
-    hdev->task_recv.next = NULL;
-    hdev->task_recv.state = 0;
-    hdev->task_recv.func = hieth_bfproc_recv;
-    hdev->task_recv.data = (unsigned long)ndev;
-    atomic_set(&hdev->task_recv.count, 0);
+    spin_lock_irqsave(&hdev->lock, flags);
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
+    //dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
     
     if (netif_msg_ifup(hdev)) {
         dev_dbg(hdev->dev, "enabling %s\n", ndev->name);
     }
 
     /* Enable clock */
+    clk_prepare_enable(hdev->clk);
     clk_enable(hdev->clk);
     
     /* Power UP */
     hieth_power(hdev, true);
     
-    /* Reset and initialize */
+    /* Reset and initialize HW */
     hieth_reset(hdev);
     hieth_init(hdev);
     
@@ -562,13 +516,18 @@ static int hieth_open(struct net_device *ndev)
         goto _error;
     }
     
-    /* Resume PHY */
-    phy_resume(hdev->phy_dev);
+    /* Request IRQ */
+    if (request_irq(ndev->irq, &hieth_interrupt, 0, ndev->name, ndev))
+    {
+        ret = -EAGAIN;
+        goto _error;
+    }
     
     /* mask with MAC supported features */
     hdev->phy_dev->supported &= PHY_BASIC_FEATURES;
     hdev->phy_dev->advertising = hdev->phy_dev->supported;
     
+    /* Unknown settings for start */
     hdev->link = 0; 
     hdev->speed = 0; 
     hdev->duplex = DUPLEX_UNKNOWN;
@@ -576,23 +535,18 @@ static int hieth_open(struct net_device *ndev)
     /* Force default PHY interface setup in chip, this will probably be changed by the PHY driver */
     hieth_link_changed(hdev);
     
-    phy_start(hdev->phy_dev);
-    //phy_start_aneg(hdev->phy_dev);
+    /* Start PHY */
+    phy_start(hdev->phy_dev); // NOTE phy_start_aneg(hdev->phy_dev);
     
+    /* Start packet queue */
     netif_start_queue(ndev);
-    //napi_enable(&hdev->napi);
     
-    spin_lock_irqsave(&hdev->lock, flags);
-    
-    // enable interrupts
-    _hieth_int_clear(hdev, HIETH_FLAG_INT_MASK);
-    _hieth_int_enable(hdev, HIETH_FLAG_INT_RXD_UP | HIETH_FLAG_INT_TX_UP);
-    _hieth_int_enable_up_control(hdev, true);
-    _hieth_int_enable_all_control(hdev, true);
-    
-    spin_unlock_irqrestore(&hdev->lock, flags);
-    
+    /* NAPI */
+    napi_enable(&hdev->napi);
+
 _error:
+    spin_unlock_irqrestore(&hdev->lock, flags);
+
     return ret;
 }
 
@@ -601,26 +555,30 @@ static int hieth_stop(struct net_device *ndev)
     struct hieth_device *hdev = netdev_priv(ndev);
     unsigned long flags = 0;
     
-    if (netif_msg_ifdown(hdev))
-    {
-        dev_dbg(hdev->dev, "shutting down %s\n", ndev->name);
-    }
+    spin_lock_irqsave(&hdev->lock, flags);
     
+    /* stop packet queue */
     netif_stop_queue(ndev);
     
     /* Stop PHY */
-    if(hdev->phy_dev)
-        phy_stop(hdev->phy_dev);
+    phy_stop(hdev->phy_dev);
     
-    spin_unlock_irqrestore(&hdev->lock, flags);
+    /* Release interrupt handler */
+    free_irq(ndev->irq, ndev);
     
+    /* Detach PHY */
+    phy_detach(hdev->phy_dev);
+    
+    /* Disable carrier */
     netif_carrier_off(ndev);
-    hieth_power(hdev, false);
     
-    spin_unlock_irqrestore(&hdev->lock, flags);
+    /* Power off */
+    hieth_power(hdev, false);
     
     /* Disable clock */
     clk_disable(hdev->clk);
+    
+    spin_unlock_irqrestore(&hdev->lock, flags);
     
     return 0;
 }
@@ -632,7 +590,6 @@ static const struct net_device_ops hieth_netdev_ops = {
     .ndo_start_xmit     = hieth_start_xmit,
     .ndo_tx_timeout     = hieth_timeout,
     .ndo_set_mac_address    = hieth_set_mac_address,
-    //.ndo_set_rx_mode    = hieth_set_rx_mode,
     .ndo_do_ioctl       = hieth_ioctl,
     .ndo_change_mtu     = eth_change_mtu,
     .ndo_validate_addr  = eth_validate_addr,
@@ -662,9 +619,7 @@ static int hieth_netdev_probe(struct platform_device *pdev)
     hdev->dev = &pdev->dev;
     hdev->ndev = ndev;
     hdev->pdev = pdev;
-    
-    spin_lock_init(&hdev->lock);
-    
+
     /* Get clock for the device */
     hdev->clk = devm_clk_get(&pdev->dev, NULL);
     if (IS_ERR(hdev->clk)) {
@@ -672,16 +627,12 @@ static int hieth_netdev_probe(struct platform_device *pdev)
         goto out_freenetdev;
     }
     
-    /* Enable MAC clock */
-    clk_prepare_enable(hdev->clk);
-    clk_enable(hdev->clk);
-    
     /* Get platform resources (MEM) */
     hdev->membase = of_iomap(np, 0);
     if (!hdev->membase) {
         dev_err(&pdev->dev, "failed to remap registers\n");
         ret = -ENOMEM;
-        goto out_disable_clocks;
+        goto out_freenetdev;
     }
     
     /* fill in parameters for net-dev structure */
@@ -695,32 +646,21 @@ static int hieth_netdev_probe(struct platform_device *pdev)
         goto out_iounmap;
     }
     
-    /* Request IRQ */
-    if (request_irq(ndev->irq, &hieth_interrupt, 0, ndev->name, ndev))
-    {
-        ret = -EAGAIN;
-        goto out_iounmap;
-    }
-    
     /* get PHY mode (MII/RMII) */
     hdev->phy_interface = of_get_phy_mode(np);
     if (hdev->phy_interface < 0) {
         dev_warn(&pdev->dev, "not find phy-mode\n");
         ret = -EINVAL;
-        goto out_freeirq;
+        goto out_iounmap;
     }
-    
-    printk(KERN_INFO "LUKIER PHY INTERFACE %i\n", hdev->phy_interface);
-    
+   
     /* get PHY device */
     hdev->phy_node = of_parse_phandle(np, "phy-handle", 0);
     if (!hdev->phy_node) {
         dev_err(&pdev->dev, "no associated PHY\n");
         ret = -ENODEV;
-        goto out_freeirq;
+        goto out_iounmap;
     }
-    
-    printk(KERN_INFO "LUKIER PHY NODE %s / %s\n", hdev->phy_node->full_name, hdev->phy_node->name);
     
     /* Read MAC-address from DT */
     mac_addr = of_get_mac_address(np);
@@ -731,48 +671,40 @@ static int hieth_netdev_probe(struct platform_device *pdev)
     
     /* Check if the MAC address is valid */
     if (!is_valid_ether_addr(ndev->dev_addr)) {
-        /* Get MAC address from current HW setting (POR state is all zeros) */
+        /* Get MAC address from current HW setting (POR state is all zeros, but u-boot maybe) */
         _hieth_get_mac_address_internal(ndev, ndev->dev_addr);
-        if (!is_valid_ether_addr(ndev->dev_addr)) {
+        if (!is_valid_ether_addr(ndev->dev_addr)) { /* no luck, go random */
             eth_hw_addr_random(ndev);
-            dev_warn(&pdev->dev, "using random MAC address %pM\n", 
-                     ndev->dev_addr);
+            dev_warn(&pdev->dev, "using random MAC address %pM\n",  ndev->dev_addr);
         }
     }
-    
-    /* Allocate buffers */
-    // TODO
-    
-    /* Power UP */
-    hieth_power(hdev, true);
-    
-    /* Reset the ethernet controller */
-    hieth_reset(hdev);
-    
-    /* Initialize MAC */
-    hieth_init(hdev);
     
     /* Setup driver functions */
     ndev->watchdog_timeo = msecs_to_jiffies(watchdog);
     ndev->netdev_ops = &hieth_netdev_ops;
     ndev->ethtool_ops = &hieth_ethtool_ops;
     
+    /* Done setting ndev, attach to pdev */
     platform_set_drvdata(pdev, ndev);
     
     /* Carrier starts down, phylib will bring it up */
     netif_carrier_off(ndev);
     
     /* Add NAPI */
-    //netif_napi_add(ndev, &hdev->napi, hieth_poll, HIETH_NAPI_WEIGHT);
+    netif_napi_add(ndev, &hdev->napi, hieth_poll, HIETH_NAPI_WEIGHT);
+    
+    /* Make lock */
+    spin_lock_init(&hdev->lock);
     
     /* Register netdev */
     ret = register_netdev(ndev);
     if (ret) {
         dev_err(&pdev->dev, "Registering netdev failed!\n");
         ret = -ENODEV;
-        goto out_freeirq;
+        goto out_iounmap;
     }
     
+    /* Enable wakeup */
     device_init_wakeup(&pdev->dev, 1);
     device_set_wakeup_enable(&pdev->dev, 0);
     
@@ -781,15 +713,9 @@ static int hieth_netdev_probe(struct platform_device *pdev)
     
     return 0;
     
-out_unregister:
-    unregister_netdev(ndev);
-out_freeirq:
-    free_irq(ndev->irq, ndev);
 out_iounmap:
     iounmap(hdev->membase);
-out_disable_clocks:
-    clk_disable(hdev->clk);
-
+    
 out_freenetdev:
     free_netdev(ndev);
 out:
@@ -803,12 +729,8 @@ static int hieth_netdev_remove(struct platform_device *pdev)
     struct net_device *ndev = platform_get_drvdata(pdev);
     struct hieth_device *hdev = netdev_priv(ndev);
     
-    printk(KERN_INFO "LUKIER: %s\n", __PRETTY_FUNCTION__);
-        
     /* Unregister netdevice */
     unregister_netdev(ndev);
-    
-    // TODO FIXME remove allocated memory
     
     /* Power down */
     hieth_power(hdev, false);
@@ -831,15 +753,19 @@ static int hieth_suspend(struct platform_device *pdev, pm_message_t state)
     struct net_device *ndev = platform_get_drvdata(pdev);
     struct hieth_device *hdev = netdev_priv(ndev);
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     if (device_may_wakeup(&pdev->dev))
         enable_irq_wake(ndev->irq);
     
     if (ndev) {
         if (netif_running(ndev)) {
             
+            /* Disable carrier */
             netif_carrier_off(ndev);
+            
+            /* PHY suspend */
+            phy_suspend(hdev->phy_dev);
+            
+            /* Detach device */
             netif_device_detach(ndev);
             
             /* Power down */
@@ -858,8 +784,6 @@ static int hieth_resume(struct platform_device *pdev)
     struct net_device *ndev = platform_get_drvdata(pdev);
     struct hieth_device *hdev = 0;
     
-    dev_info(&pdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     if (device_may_wakeup(&pdev->dev)) {
         disable_irq_wake(ndev->irq);
     }
@@ -874,11 +798,15 @@ static int hieth_resume(struct platform_device *pdev)
             /* Power UP */
             hieth_power(hdev, true);
             
+            /* Attach device */
+            netif_device_attach(ndev);
+            
+            /* PHY resume */
+            phy_resume(hdev->phy_dev);
+            
             /* Reset and initialize */
             hieth_reset(hdev);
             hieth_init(hdev);
-            
-            netif_device_attach(ndev);
         }
     }
     

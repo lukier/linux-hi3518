@@ -1,9 +1,10 @@
 #ifndef _HIETHV100_H_
 #define _HIETHV100_H_
 
-#define HIETH_MAX_QUEUE_DEPTH   64
-#define HIETH_MAX_FRAME_SIZE    (SZ_1K*2)
-#define HIETH_NAPI_WEIGHT 16
+#define HIETH_MAX_QUEUE_DEPTH_RX   32
+#define HIETH_MAX_QUEUE_DEPTH_TX   32
+#define HIETH_MAX_FRAME_SIZE       (SZ_1K*2)
+#define HIETH_NAPI_WEIGHT          16
 
 #define HIETH_REG_PERI_CRG51            0x200300CC
 #define HIETH_REG_UD_MAC_PORTSEL        0x0200
@@ -106,15 +107,15 @@
 #define HIETH_FLAG_INT_ALL_UP           (1 << 18)
 
 #define HIETH_FLAG_INT_MASK             (HIETH_FLAG_INT_RX_UP | \
-HIETH_FLAG_INT_TX_UP | \
-HIETH_FLAG_INT_LINK_UP | \
-HIETH_FLAG_INT_SPEED_UP | \
-HIETH_FLAG_INT_DUPLEX_UP | \
-HIETH_FLAG_INT_STAT_UP | \
-HIETH_FLAG_INT_TXQUEUE_UP | \
-HIETH_FLAG_INT_RXD_UP | \
-HIETH_FLAG_INT_VLAN | \
-HIETH_FLAG_INT_MDIO_FINISH)
+                                         HIETH_FLAG_INT_TX_UP | \
+                                         HIETH_FLAG_INT_LINK_UP | \
+                                         HIETH_FLAG_INT_SPEED_UP | \
+                                         HIETH_FLAG_INT_DUPLEX_UP | \
+                                         HIETH_FLAG_INT_STAT_UP | \
+                                         HIETH_FLAG_INT_TXQUEUE_UP | \
+                                         HIETH_FLAG_INT_RXD_UP | \
+                                         HIETH_FLAG_INT_VLAN | \
+                                         HIETH_FLAG_INT_MDIO_FINISH)
 
 struct hieth_device {
     struct clk              *clk;
@@ -137,14 +138,13 @@ struct hieth_device {
     unsigned int            speed;
     unsigned int            duplex;
     
-    //struct napi_struct      napi;
+    struct napi_struct      napi;
     
-    struct tasklet_struct   task_recv;
+    unsigned char           rxbuffers[HIETH_MAX_QUEUE_DEPTH_RX][(SZ_1K*2)];
+    unsigned int            rx_buffer_cur;
+    unsigned char           txbuffers[HIETH_MAX_QUEUE_DEPTH_TX][(SZ_1K*2)];
+    unsigned int            tx_buffer_cur;
     
-    unsigned char           rxbuffer[(SZ_1K*2)];
-    unsigned int            rxlen;
-    unsigned char           txbuffer[(SZ_1K*2)];
-    struct sk_buff          *skb_in_flight;
     #if 0    
     struct sk_buff          *skb_last;
     u16                     tx_fifo_stat;
@@ -239,8 +239,6 @@ static int _hieth_set_mii_mode(struct hieth_device *hdev)
     void* regmem = 0;
     unsigned long flags = 0;
     
-    dev_info(hdev->dev, "LUKIER: %s %i\n", __PRETTY_FUNCTION__, hdev->phy_interface);
-    
     regmem = ioremap(HIETH_REG_PERI_CRG51, 0x04);
     
     spin_lock_irqsave(&hdev->lock, flags);
@@ -265,8 +263,6 @@ static void _hieth_core_reset(struct hieth_device *hdev)
 {
     void* regmem = 0;
     
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     dev_dbg(hdev->dev, "resetting device\n");
     
     regmem = ioremap(HIETH_REG_PERI_CRG51, 0x04);
@@ -285,8 +281,6 @@ static void _hieth_core_reset(struct hieth_device *hdev)
 
 static void _hieth_soft_reset(struct hieth_device *hdev)
 {
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
-    
     /* note it needs it twice */
     set_bit(0, hdev->membase + HIETH_REG_GLB_SOFT_RESET);
     msleep(20);
@@ -301,8 +295,6 @@ static void _hieth_soft_reset(struct hieth_device *hdev)
 static void _hieth_core_clock(struct hieth_device *hdev, bool enable)
 {
     void* regmem = 0;
-    
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
     
     regmem = ioremap(HIETH_REG_PERI_CRG51, 0x04);
     
@@ -350,14 +342,12 @@ static void _hieth_transmit_frame(struct hieth_device *hdev, void* buf, unsigned
 {
     /* write physical address */
     iowrite32(virt_to_phys(buf), hdev->membase + HIETH_REG_UD_GLB_EQ_ADDR);
-    /* write length + 4 bytes for CRC, triggers transmission */
-    iowrite32((len + 4) & 0x7FF, hdev->membase + HIETH_REG_UD_GLB_EQFRM_LEN);
+    /* write length, triggers transmission */
+    iowrite32((len) & 0x7FF, hdev->membase + HIETH_REG_UD_GLB_EQFRM_LEN);
 }
 
 static void _hieth_set_receive_buffer(struct hieth_device *hdev, void* buf)
 {
-    /* I don't know why +2 */
-    //iowrite32(virt_to_phys(((u8*)buf) + 2), hdev->membase + HIETH_REG_UD_GLB_IQ_ADDR);
     iowrite32(virt_to_phys(buf), hdev->membase + HIETH_REG_UD_GLB_IQ_ADDR);
 }
 
@@ -394,8 +384,6 @@ static int _hieth_get_mac_address_internal(struct net_device *dev, char *mac)
 {
     struct hieth_device *hdev = netdev_priv(dev);
     unsigned long reg;
-    
-    dev_info(hdev->dev, "LUKIER: %s\n", __PRETTY_FUNCTION__);
     
     reg = ioread32(hdev->membase + HIETH_REG_GLB_HOSTMAC_H16);
     mac[0] = (reg>>8) & 0xff;

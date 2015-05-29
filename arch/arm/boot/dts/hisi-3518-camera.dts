@@ -21,9 +21,17 @@
 };
 
 &timer01 {
-    status = "okay";
+    status = "okay"; 
 };
 
 &uart0 {
+    status = "okay";
+};
+
+&ethernet {
+    status = "okay";
+};
+
+&mdio {
     status = "okay";
 };

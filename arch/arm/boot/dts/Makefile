@@ -119,7 +119,7 @@ dtb-$(CONFIG_ARCH_EXYNOS5) += \
 dtb-$(CONFIG_ARCH_HI3xxx) += \
 	hi3620-hi4511.dtb
 dtb-$(CONFIG_ARCH_HI3518) += \
-	hisi-3518-camera.dts
+	hisi-3518-camera.dtb
 dtb-$(CONFIG_ARCH_HIX5HD2) += \
 	hisi-x5hd2-dkb.dtb
 dtb-$(CONFIG_ARCH_HIGHBANK) += \

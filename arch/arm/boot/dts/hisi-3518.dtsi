@@ -484,8 +484,8 @@
             phy-handle = <&ethphy>;
             phy-mode = "rmii";
             
-            mac-address = [00 12 12 94 21 4B];
-            status = "okay";
+            mac-address = [00 00 00 00 00 00];
+            status = "disabled";
         };
         
         mdio: mdio@10090000 {
@@ -493,7 +493,7 @@
             reg = <0x10091100 0x14>;
             #address-cells = <1>;
             #size-cells = <0>;
-            status = "okay";
+            status = "disabled";
             
             reset-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
             reset-gpio-names = "nreset";
