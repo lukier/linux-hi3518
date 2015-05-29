@@ -166,6 +166,12 @@
             clock-frequency = <24000000>;
         };
         
+        clk_slow: clock_slow_fixed {
+            #clock-cells = <0>;
+            compatible = "fixed-clock";
+            clock-frequency = <3000000>;
+        };
+        
         clk_uart: clock_uart_fixed {
             #clock-cells = <0>;
             compatible = "fixed-clock";
@@ -226,6 +232,8 @@
                 interrupts = <5>;
                 clocks = <&clk_uart>, <&clk_apb>;
                 clock-names = "uartclk", "apb_pclk";
+                pinctrl-names = "default";
+                pinctrl-0 = <&uart1_pins>;
                 status = "disabled";
             };
 
@@ -235,6 +243,8 @@
                 interrupts = <25>;
                 clocks = <&clk_uart>, <&clk_apb>;
                 clock-names = "uartclk", "apb_pclk";
+                pinctrl-names = "default";
+                pinctrl-0 = <&uart2_pins>;
                 status = "disabled";
             };
 
@@ -244,7 +254,7 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -256,7 +266,7 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -268,7 +278,7 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -280,7 +290,7 @@
                 interrupts = <30>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -292,7 +302,7 @@
                 interrupts = <30>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -304,7 +314,7 @@
                 interrupts = <30>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -316,7 +326,7 @@
                 interrupts = <31>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -328,7 +338,7 @@
                 interrupts = <31>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -340,7 +350,7 @@
                 interrupts = <31>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -352,7 +362,7 @@
                 interrupts = <31>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -364,7 +374,7 @@
                 interrupts = <30>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -376,13 +386,13 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
             };
 
-            wdt0: watchdog@a2c000 {
+            wdt: watchdog@a2c000 {
                 compatible = "arm,sp805", "arm,primecell";
                 arm,primecell-periphid = <0x00141805>;
                 reg = <0xa2c000 0x10000>;
@@ -390,12 +400,12 @@
                 clocks = <&clock HI3518_NONE_CLOCK>;
                 status = "disabled";
             };
-            /*
+
             dmac: dma-controller@100D0000 {
                 compatible = "arm,pl081", "arm,primecell";
                 reg = <0x100D0000 0x10000>;
                 interrupts = <14>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
                 #dma-cells = <1>;
                 dma-channels = <4>;
                 dma-requests = <16>;
@@ -408,7 +418,10 @@
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <6>;
+                clocks = <&clk_apb>;
                 dmas = <&dmac 14>, <&dmac 15>;
+                pinctrl-names = "default";
+                pinctrl-0 = <&spi0_pins>;
                 status = "disabled";
             };
             
@@ -418,10 +431,12 @@
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <7>;
+                clocks = <&clk_apb>;
                 dmas = <&dmac 12>, <&dmac 13>;
+                pinctrl-names = "default";
+                pinctrl-0 = <&spi1_pins>;
                 status = "disabled";
             };
-            */
         };
 
         /*
@@ -448,14 +463,16 @@
         */
         pmx0: pinmux@200F0000 {
             compatible = "pinctrl-single";
-            reg = <0x200F0000 0x10000>;
+            reg = <0x200F0000 0x17C>;
             #address-cells = <1>;
             #size-cells = <0>;
             
             pinctrl-single,register-width = <32>;
             pinctrl-single,function-mask = <0x7>;
             
-            ethernet_pins: pinmux_ethernet_pins  {
+            status = "okay";
+            
+            ethernet_pins_rmii: pinmux_ethernet_pins_rmii  {
                 pinctrl-single,pins = <MUXCTRL_REG16 1 /* MII_RXD1 */ 
                                        MUXCTRL_REG17 1 /* MII_RXD0 */ 
                                        MUXCTRL_REG20 1 /* MII_TXD1 */ 
@@ -468,6 +485,116 @@
                                        MUXCTRL_REG29 1 /* MDCK */
                                        MUXCTRL_REG30 1 /* MDIO */>;
             };
+            
+            ethernet_pins_mii: pinmux_ethernet_pins_mii  {
+                pinctrl-single,pins = <MUXCTRL_REG12 1 /* MII_CRS */ 
+                                       MUXCTRL_REG13 1 /* MII_COL */ 
+                                       MUXCTRL_REG14 1 /* MII_RXD3 */ 
+                                       MUXCTRL_REG15 1 /* MII_RXD2 */                
+                                       MUXCTRL_REG16 1 /* MII_RXD1 */ 
+                                       MUXCTRL_REG17 1 /* MII_RXD0 */
+                                       MUXCTRL_REG18 1 /* MII_TXD3 */ 
+                                       MUXCTRL_REG19 1 /* MII_TXD2 */  
+                                       MUXCTRL_REG20 1 /* MII_TXD1 */ 
+                                       MUXCTRL_REG21 1 /* MII_TXD0 */
+                                       MUXCTRL_REG22 1 /* MII_RXCK */ 
+                                       MUXCTRL_REG23 3 /* RMII_CLK */ 
+                                       MUXCTRL_REG24 1 /* MII_RXDV */ 
+                                       MUXCTRL_REG25 1 /* MII_TXEN */ 
+                                       MUXCTRL_REG26 1 /* MII_TXER */ 
+                                       MUXCTRL_REG27 1 /* MII_RXER */ 
+                                       MUXCTRL_REG28 1 /* EPHY_CLK */
+                                       MUXCTRL_REG29 1 /* MDCK */
+                                       MUXCTRL_REG30 1 /* MDIO */>;
+            };
+            
+            uart1_pins: pinmux_uart1_pins {
+                pinctrl-single,pins = <MUXCTRL_REG8 1 /* UART1_RTSN */ 
+                                       MUXCTRL_REG9 1 /* UART1_RXD */ 
+                                       MUXCTRL_REG10 1 /* UART1_CTSN */ 
+                                       MUXCTRL_REG11 1 /* UART1_TXD */>;
+            };
+            
+            uart2_pins: pinmux_uart2_pins {
+                pinctrl-single,pins = <MUXCTRL_REG66 1 /* UART2_RXD */ 
+                                       MUXCTRL_REG67 1 /* UART2_TXD */>;
+            };
+            
+            spi0_pins: pinmux_spi0_pins {
+                pinctrl-single,pins = <MUXCTRL_REG3 1 /* SPI0_SCLK */ 
+                                       MUXCTRL_REG4 1 /* SPI0_SDO */ 
+                                       MUXCTRL_REG5 1 /* SPI0_SDI */>;
+            };
+            
+            spi1_pins: pinmux_spi1_pins {
+                pinctrl-single,pins = <MUXCTRL_REG68 1 /* SPI1_SCLK */ 
+                                       MUXCTRL_REG69 1 /* SPI1_SDO */ 
+                                       MUXCTRL_REG70 1 /* SPI1_SDI */ 
+                                       MUXCTRL_REG71 1 /* SPI1_CSN */>;
+            };
+            
+            i2c_pins: pinmux_i2c_pins {
+                pinctrl-single,pins = <MUXCTRL_REG6 1 /* I2C_SDA */ 
+                                       MUXCTRL_REG7 1 /* I2C_SCL */>;
+            };
+            
+            sdio_pins: pinmux_sdio_pins {
+                pinctrl-single,pins = <MUXCTRL_REG1 1 /* SDIO_CCLK_OUT */ 
+                                       MUXCTRL_REG32 1 /* SDIO_CARD_DETECT */ 
+                                       MUXCTRL_REG33 1 /* SDIO_CARD_POWER_EN */ 
+                                       MUXCTRL_REG34 1 /* SDIO_CWPR */ 
+                                       MUXCTRL_REG35 1 /* SDIO_CCMD */ 
+                                       MUXCTRL_REG36 1 /* SDIO_CDATA0 */ 
+                                       MUXCTRL_REG37 1 /* SDIO_CDATA1 */ 
+                                       MUXCTRL_REG38 1 /* SDIO_CDATA2 */ 
+                                       MUXCTRL_REG39 1 /* SDIO_CDATA3 */>;
+            };
+            
+            sfc_pins: pinmux_sfc_pins {
+                pinctrl-single,pins = <MUXCTRL_REG40 0 /* SFC_DIO */ 
+                                       MUXCTRL_REG41 0 /* SFC_WP_IO2 */ 
+                                       MUXCTRL_REG42 0 /* SFC_CLK */ 
+                                       MUXCTRL_REG43 0 /* SFC_DOI */
+                                       MUXCTRL_REG44 0 /* SFC_HOLD_IO3 */>;
+            };
+            
+            usbphy_pins: pinmux_usbphy_pins {
+                pinctrl-single,pins = <MUXCTRL_REG45 1 /* USB_OVRCUR */ 
+                                       MUXCTRL_REG46 1 /* USB_PWREN */>;
+            };
+            
+            pwm0_pins: pinmux_pwm0_pins {
+                pinctrl-single,pins = <MUXCTRL_REG47 1 /* PWM_OUT0 */ >;
+            };
+            
+            pwm1_pins: pinmux_pwm1_pins {
+                pinctrl-single,pins = <MUXCTRL_REG48 1 /* PWM_OUT1 */ >;
+            };
+            
+            ir_pins: pinmux_ir_pins {
+                pinctrl-single,pins = <MUXCTRL_REG49 0 /* IR_IN */ >;
+            };
+            
+            sensor_pins: pinmux_sensor_pins {
+                pinctrl-single,pins = <MUXCTRL_REG0 1 /* SHUTTER_TRIG */ 
+                                       MUXCTRL_REG2 1 /* SENSOR_CLK */ 
+                                       MUXCTRL_REG31 1 /* FLASH_TRIG */ 
+                                       MUXCTRL_REG80 0 /* VIU_CLK */ 
+                                       MUXCTRL_REG81 0 /* VIU_VS */ 
+                                       MUXCTRL_REG82 0 /* VIU_HS */ 
+                                       MUXCTRL_REG83 0 /* VIU_DAT11 */ 
+                                       MUXCTRL_REG84 0 /* VIU_DAT10 */ 
+                                       MUXCTRL_REG85 0 /* VIU_DAT9 */ 
+                                       MUXCTRL_REG86 0 /* VIU_DAT8 */ 
+                                       MUXCTRL_REG87 0 /* VIU_DAT7 */ 
+                                       MUXCTRL_REG88 0 /* VIU_DAT6 */ 
+                                       MUXCTRL_REG89 0 /* VIU_DAT5 */ 
+                                       MUXCTRL_REG90 0 /* VIU_DAT4 */ 
+                                       MUXCTRL_REG91 0 /* VIU_DAT3 */ 
+                                       MUXCTRL_REG92 0 /* VIU_DAT2 */ 
+                                       MUXCTRL_REG93 0 /* VIU_DAT1 */ 
+                                       MUXCTRL_REG94 0 /* VIU_DAT0 */>;
+            };
         };
         
         ethernet: ether@10090000 {
@@ -479,7 +606,7 @@
             interrupts = <12>;
             
             pinctrl-names = "default";
-            pinctrl-0 = <&ethernet_pins>;
+            pinctrl-0 = <&ethernet_pins_rmii>;
             
             phy-handle = <&ethphy>;
             phy-mode = "rmii";
@@ -503,21 +630,20 @@
                 reg = <1>;
             };
         };
-        
-/*
-        usb0: ehci@100B0000 {
+
+        usb_ehci: ehci@100B0000 {
             compatible = "generic-ehci";
             reg = <0x100B0000 0x10000>;
             interrupts = <15>;
-            clocks = <&clock HI3518_NONE_CLOCK>;
+            clocks = <&clk_apb>;
             status = "disabled";
         };
         
-        usb1: ohci@100A0000 {
+        usb_ohci: ohci@100A0000 {
             compatible = "generic-ohci";
             reg = <0x100A0000 0x10000>;
             interrupts = <16>;
-            clocks = <&clock HI3518_NONE_CLOCK>;
+            clocks = <&clk_apb>;
             status = "disabled";
         };
         
@@ -525,33 +651,55 @@
             compatible = "hisilicon,hix5hd2-ir";
             reg = <0x20070000 0x10000>;
             interrupts = <19>;
-            clocks = <&clock HI3518_NONE_CLOCK>;
+            clocks = <&clk_apb>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&ir_pins>;
             status = "disabled";
         };
 
-        i2c0: i2c@200D0000 {
+        i2c: i2c@200D0000 {
             compatible = "hisilicon,hix5hd2-i2c";
             reg = <0x200D0000 0x10000>;
             interrupts = <20>;
-            clocks = <&clock HI3518_NONE_CLOCK>;
+            clocks = <&clk_apb>;
             #address-cells = <1>;
             #size-cells = <0>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&i2c_pins>;
             status = "disabled";
         };
         
-        sd: mmc@10020000 {
+        sdio: sdio@10020000 {
             compatible = "snps,dw-mshc";
             reg = <0x10020000 0x10000>;
             interrupts = <18>;
-            clocks = <&clock HI3518_NONE_CLOCK>, <&clock HI3518_NONE_CLOCK>;
+            clocks = <&clk_apb>;
+            pinctrl-names = "default";
+            pinctrl-0 = <&sdio_pins>;
             status = "disabled";
         };
-        */
+        
         /*
-         * TODO:
-         * HiETH
+         * Porting TODO:
          * HiRTC
          * HiSFC
+         * 
+         * System Controller
+         * Clock Controller
+         * Reset Controller (or just reboot)
+         */
+        
+        /*
+         * NOTE: PWM clocks also 3 MHz, timers, watchdog and uarts switchable?
+         */
+        
+        /*
+         * Missing DT support:
+         * WDG - SP805
+         * DMAC - PL08x
+         * SPI - PL022
+         * SDIO - DW-MMC
+         * GPIO - PLO61
          */
     };
 };

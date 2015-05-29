@@ -28,10 +28,102 @@
     status = "okay";
 };
 
+&uart1 {
+    status = "okay";
+};
+
+&uart2 {
+    status = "okay";
+};
+
+&gpio0 {
+    status = "okay";
+};
+
+&gpio1 {
+    status = "okay";
+};
+
+&gpio2 {
+    status = "okay";
+};
+
+&gpio3 {
+    status = "okay";
+};
+
+&gpio4 {
+    status = "okay";
+};
+
+&gpio5 {
+    status = "okay";
+};
+
+&gpio6 {
+    status = "okay";
+};
+
+&gpio7 {
+    status = "okay";
+};
+
+&gpio8 {
+    status = "okay";
+};
+
+&gpio9 {
+    status = "okay";
+};
+
+&gpio10 {
+    status = "okay";
+};
+
+&gpio11 {
+    status = "okay";
+};
+
+&wdt {
+    status = "okay";
+};
+
+&dmac {
+    status = "okay";
+};
+
+&spi0 {
+    status = "okay";
+};
+
+&spi1 {
+    status = "okay";
+};
+
 &ethernet {
     status = "okay";
 };
 
 &mdio {
+    status = "okay";
+};
+
+&usb_ehci {
+    status = "okay";
+};
+
+&usb_ohci {
+    status = "okay";
+};
+
+&ir {
+    status = "okay";
+};
+
+&i2c {
+    status = "okay";
+};
+
+&sdio {
     status = "okay";
 };
