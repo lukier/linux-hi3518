@@ -260,8 +260,6 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
-                gpio-ranges = < &pinmux 2 0 1 &pinmux 3 0 1 &pinmux 4 0 1 &pinmux 5 0 1 &pinmux 6 1 1 &pinmux 7 2 1>;
-                gpio-ranges-group-names = "gpioa";
                 clocks = <&clk_apb>;
                 clock-names = "apb_pclk";
                 interrupt-controller;
@@ -489,17 +487,17 @@
         };
         */
         pinmux: pinmux@200F0000 {
-            compatible = "pinconf-single";
+            compatible = "pinctrl-single";
             reg = <0x200F0000 0x17C>;
             #address-cells = <1>;
             #size-cells = <1>;
-            ranges;
+            /* ranges; */
             
             pinctrl-single,register-width = <32>;
             pinctrl-single,function-mask = <0x7>;
             
             status = "okay";
-            
+#if 0      
             /* pin base, nr pins & gpio function */
             pinctrl-single,gpio-range = <
                     &range 0  36 0x00 
@@ -517,7 +515,7 @@
             range: gpio-range {
                 #pinctrl-single,gpio-range-cells = <3>;
             };
-            
+#endif
             ethernet_pins_rmii: pinmux_ethernet_pins_rmii  {
                 pinctrl-single,pins = <MUXCTRL_REG16 1 /* MII_RXD1 */ 
                                        MUXCTRL_REG17 1 /* MII_RXD0 */ 

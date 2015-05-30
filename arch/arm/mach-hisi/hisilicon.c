@@ -34,6 +34,8 @@
 #include <linux/amba/pl080.h>
 #include <linux/amba/pl08x.h>
 
+#include <linux/uio_driver.h>
+
 #define HI3620_SYSCTRL_PHYS_BASE		0xfc802000
 #define HI3620_SYSCTRL_VIRT_BASE		0xfe802000
 
@@ -280,6 +282,123 @@ static struct of_dev_auxdata hi3518_auxdata_lookup[] __initdata = {
     {}
 };
 
+/* UIO devices */
+
+/* VICAP */
+static struct uio_info uio_platform_data[] =  {
+    { .name = "VICAP", .version = "0", .irq = 22, },
+    { .name = "IVE", .version = "0", .irq = 21, },
+    { .name = "VPSS", .version = "0", .irq = 17, },
+    { .name = "VENC", .version = "0", .irq = 24, },
+    { .name = "JPGE", .version = "0", .irq = 26 , },
+    { .name = "MDU", .version = "0", .irq = 28, },
+};
+
+static struct resource vicap_resources[] = {
+    [0] = {
+        .name   = "VICAP",
+        .start  = 0x20580000,
+        .end    = 0x20580000 + 0x40000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct resource ive_resources[] = {
+    [0] = {
+        .name   = "IVE",
+        .start  = 0x205E0000,
+        .end    = 0x205E0000 + 0x10000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct resource vpss_resources[] = {
+    [0] = {
+        .name   = "VPSS",
+        .start  = 0x20600000,
+        .end    = 0x20600000 + 0x10000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct resource venc_resources[] = {
+    [0] = {
+        .name   = "VENC",
+        .start  = 0x20620000,
+        .end    = 0x20620000 + 0x10000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct resource jpge_resources[] = {
+    [0] = {
+        .name   = "JPGE",
+        .start  = 0x20660000,
+        .end    = 0x20660000 + 0x10000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct resource mdu_resources[] = {
+    [0] = {
+        .name   = "MDU",
+        .start  = 0x206C0000,
+        .end    = 0x206C0000 + 0x10000,
+        .flags  = IORESOURCE_MEM,
+    },
+    [1] = {
+        /* place holder for contiguous memory */
+    },
+};
+
+static struct platform_device uio_devices[] __initdata = {
+    {
+        .name = "uio_pdrv_genirq", .id = 1,
+        .dev = { .platform_data  = &uio_platform_data[0], },
+        .resource = vicap_resources, .num_resources = ARRAY_SIZE(vicap_resources),
+    },
+    {
+        .name = "uio_pdrv_genirq", .id = 2,
+        .dev = { .platform_data  = &uio_platform_data[1], },
+        .resource = ive_resources, .num_resources = ARRAY_SIZE(ive_resources),
+    },
+    {
+        .name = "uio_pdrv_genirq", .id = 3,
+        .dev = { .platform_data  = &uio_platform_data[2], },
+        .resource = vpss_resources, .num_resources = ARRAY_SIZE(vpss_resources),
+    },
+    {
+        .name = "uio_pdrv_genirq", .id = 4,
+        .dev = { .platform_data  = &uio_platform_data[3], },
+        .resource = venc_resources, .num_resources = ARRAY_SIZE(venc_resources),
+    },
+    {
+        .name = "uio_pdrv_genirq", .id = 5,
+        .dev = { .platform_data  = &uio_platform_data[4], },
+        .resource = jpge_resources, .num_resources = ARRAY_SIZE(jpge_resources),
+    },
+    {
+        .name = "uio_pdrv_genirq", .id = 6,
+        .dev = { .platform_data  = &uio_platform_data[5], },
+        .resource = mdu_resources, .num_resources = ARRAY_SIZE(mdu_resources),
+    },
+};
+
 static void hi3518_default_config(void)
 {
     void* regmem = ioremap(IOCONFIG_BASE, 0x1000);
@@ -328,6 +447,13 @@ static void hi3518_default_config(void)
 static void __init hi3518_dt_init(void)
 {
     hi3518_default_config();
+    
+    platform_device_add(&uio_devices[0]);
+    platform_device_add(&uio_devices[1]);
+    platform_device_add(&uio_devices[2]);
+    platform_device_add(&uio_devices[3]);
+    platform_device_add(&uio_devices[4]);
+    platform_device_add(&uio_devices[5]);
     
     of_platform_populate(NULL, of_default_bus_match_table, hi3518_auxdata_lookup, NULL);
     
