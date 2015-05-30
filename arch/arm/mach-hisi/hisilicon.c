@@ -96,18 +96,18 @@ struct platform_device hi3518_wdt_device = {
 };
 
 static struct pl061_platform_data gpio_plat_data[] = {
-    { .gpio_base  = 0, .irq_base   = GPIO0_IRQ, },
-    { .gpio_base  = 8, .irq_base   = GPIO1_IRQ, },
-    { .gpio_base  = 16, .irq_base   = GPIO2_IRQ, },
-    { .gpio_base  = 24, .irq_base   = GPIO3_IRQ, },
-    { .gpio_base  = 32, .irq_base   = GPIO4_IRQ, },
-    { .gpio_base  = 40, .irq_base   = GPIO5_IRQ, },
-    { .gpio_base  = 48, .irq_base   = GPIO6_IRQ, },
-    { .gpio_base  = 56, .irq_base   = GPIO7_IRQ, },
-    { .gpio_base  = 64, .irq_base   = GPIO8_IRQ, },
-    { .gpio_base  = 72, .irq_base   = GPIO9_IRQ, },
-    { .gpio_base  = 80, .irq_base   = GPIO10_IRQ, },
-    { .gpio_base  = 88, .irq_base   = GPIO11_IRQ, },
+    { .gpio_base  = 0, .irq_base   = GPIO0_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 8, .irq_base   = GPIO1_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 16, .irq_base   = GPIO2_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 24, .irq_base   = GPIO3_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 32, .irq_base   = GPIO4_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 40, .irq_base   = GPIO5_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 48, .irq_base   = GPIO6_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 56, .irq_base   = GPIO7_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 64, .irq_base   = GPIO8_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 72, .irq_base   = GPIO9_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 80, .irq_base   = GPIO10_IRQ, .directions = 0x00, .values = 0x00, },
+    { .gpio_base  = 88, .irq_base   = GPIO11_IRQ, .directions = 0x00, .values = 0x00, },
 };
 
 /* ssp device registration */
