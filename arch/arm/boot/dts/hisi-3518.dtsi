@@ -113,6 +113,8 @@
 / {
     aliases {
         serial0 = &uart0;
+        serial1 = &uart1;
+        serial2 = &uart2;
         timer0 = &timer01;
     };
     
@@ -133,13 +135,11 @@
     };
     
     vic0: interrupt-controller@10140000 {
-        compatible = "arm,pl192-vic";
+        compatible = "arm,pl190-vic";
         interrupt-controller;
         #interrupt-cells = <1>;
         reg = <0x10140000 0x10000>;
-        
-        valid-mask = <0xffffff7f>;
-        valid-wakeup-mask = <0x0000ff7f>;
+        status = "okay";
     };
     
     clocks {
@@ -179,6 +179,12 @@
         };
         
         clk_eth: clock_eth_fixed {
+            #clock-cells = <0>;
+            compatible = "fixed-clock";
+            clock-frequency = <50000000>;
+        };
+        
+        clk_sdio: clock_sdio_fixed {
             #clock-cells = <0>;
             compatible = "fixed-clock";
             clock-frequency = <50000000>;
@@ -250,11 +256,12 @@
 
             gpio0: gpio@20140000 {
                 compatible = "arm,pl061", "arm,primecell";
-                reg = <0x20150000 0x10000>;
+                reg = <0x20140000 0x10000>;
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -267,6 +274,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -279,6 +287,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -291,6 +300,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -303,6 +313,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -315,6 +326,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -327,6 +339,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -339,6 +352,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -351,6 +365,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -363,6 +378,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -375,6 +391,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -387,6 +404,7 @@
                 gpio-controller;
                 #gpio-cells = <2>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 interrupt-controller;
                 #interrupt-cells = <2>;
                 status = "disabled";
@@ -397,42 +415,49 @@
                 arm,primecell-periphid = <0x00141805>;
                 reg = <0xa2c000 0x10000>;
                 interrupts = <1>;
-                clocks = <&clock HI3518_NONE_CLOCK>;
+                clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 status = "disabled";
             };
 
             dmac: dma-controller@100D0000 {
-                compatible = "arm,pl081", "arm,primecell";
+                compatible = "arm,pl080", "arm,primecell";
+                arm,primecell-periphid = <0x00041080>;
                 reg = <0x100D0000 0x10000>;
                 interrupts = <14>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 #dma-cells = <1>;
                 dma-channels = <4>;
                 dma-requests = <16>;
                 status = "disabled";
             };
             
-            spi0: spi@200C0000 {
+            spi0: spi0@200C0000 {
                 compatible = "arm,pl022", "arm,primecell";
                 reg = <0x200C0000 0x10000>;
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <6>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 dmas = <&dmac 14>, <&dmac 15>;
+                dma-names = "rx", "tx";
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi0_pins>;
                 status = "disabled";
             };
             
-            spi1: spi@200E0000 {
+            spi1: spi1@200E0000 {
                 compatible = "arm,pl022", "arm,primecell";
                 reg = <0x200E0000 0x10000>;
                 #address-cells = <1>;
                 #size-cells = <0>;
                 interrupts = <7>;
                 clocks = <&clk_apb>;
+                clock-names = "apb_pclk";
                 dmas = <&dmac 12>, <&dmac 13>;
+                dma-names = "rx", "tx";
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi1_pins>;
                 status = "disabled";
@@ -662,6 +687,7 @@
             reg = <0x200D0000 0x10000>;
             interrupts = <20>;
             clocks = <&clk_apb>;
+            clock-names = "apb_pclk";
             #address-cells = <1>;
             #size-cells = <0>;
             pinctrl-names = "default";
@@ -673,7 +699,8 @@
             compatible = "snps,dw-mshc";
             reg = <0x10020000 0x10000>;
             interrupts = <18>;
-            clocks = <&clk_apb>;
+            clocks = <&clk_sdio>, <&clk_apb>;
+            clock-names = "ciu", "biu";
             pinctrl-names = "default";
             pinctrl-0 = <&sdio_pins>;
             status = "disabled";
@@ -698,8 +725,9 @@
          * WDG - SP805
          * DMAC - PL08x
          * SPI - PL022
-         * SDIO - DW-MMC
          * GPIO - PLO61
+         * 
+         * Maybe use: OF_DEV_AUXDATA
          */
     };
 };

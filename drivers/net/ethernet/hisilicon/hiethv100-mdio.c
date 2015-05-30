@@ -203,8 +203,6 @@ static int hieth_mdio_probe(struct platform_device *pdev)
 		goto err_out_disable_regulator;
 
 	platform_set_drvdata(pdev, bus);
-    
-    printk(KERN_INFO "LUKIER HIETH MDIO PROBE OK\n");
 
 	return 0;
 
