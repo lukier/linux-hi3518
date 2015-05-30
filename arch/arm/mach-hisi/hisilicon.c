@@ -282,7 +282,47 @@ static struct of_dev_auxdata hi3518_auxdata_lookup[] __initdata = {
 
 static void hi3518_default_config(void)
 {
+    void* regmem = ioremap(IOCONFIG_BASE, 0x1000);
+    unsigned int reg = 0;
     
+    /* reset PINMUX to default values (GPIO), except SFC */
+    for(reg = MUXCTRL_REG0 ; reg < MUXCTRL_REG79 ; reg+=4) {
+        switch(reg)
+        {
+            case MUXCTRL_REG37: 
+                iowrite32(0x02, regmem + reg); 
+                break;
+                
+            case MUXCTRL_REG49: 
+            case MUXCTRL_REG50:
+            case MUXCTRL_REG51:
+            case MUXCTRL_REG52:
+            case MUXCTRL_REG53:
+            case MUXCTRL_REG54:
+            case MUXCTRL_REG55:
+            case MUXCTRL_REG56:
+            case MUXCTRL_REG57:
+            case MUXCTRL_REG58:
+            case MUXCTRL_REG59:
+            case MUXCTRL_REG60:
+            case MUXCTRL_REG61:
+            case MUXCTRL_REG62:
+            case MUXCTRL_REG63:
+            case MUXCTRL_REG64:
+            case MUXCTRL_REG65:
+            case MUXCTRL_REG77:
+                iowrite32(0x01, regmem + reg);
+                break;
+            
+            default: iowrite32(0x00, regmem + reg); break;
+        }
+    }
+    
+    for(reg = MUXCTRL_REG79 ; reg <= MUXCTRL_REG94 ; reg+=4) {
+        iowrite32(0x01, regmem + reg); 
+    }
+    
+    iounmap(regmem);
 }
 
 static void __init hi3518_dt_init(void)

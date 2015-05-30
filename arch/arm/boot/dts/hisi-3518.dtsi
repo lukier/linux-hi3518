@@ -260,6 +260,8 @@
                 interrupts = <29>;
                 gpio-controller;
                 #gpio-cells = <2>;
+                gpio-ranges = < &pinmux 2 0 1 &pinmux 3 0 1 &pinmux 4 0 1 &pinmux 5 0 1 &pinmux 6 1 1 &pinmux 7 2 1>;
+                gpio-ranges-group-names = "gpioa";
                 clocks = <&clk_apb>;
                 clock-names = "apb_pclk";
                 interrupt-controller;
@@ -486,16 +488,35 @@
             #gpio-cells = <3>;
         };
         */
-        pmx0: pinmux@200F0000 {
-            compatible = "pinctrl-single";
+        pinmux: pinmux@200F0000 {
+            compatible = "pinconf-single";
             reg = <0x200F0000 0x17C>;
             #address-cells = <1>;
-            #size-cells = <0>;
+            #size-cells = <1>;
+            ranges;
             
             pinctrl-single,register-width = <32>;
             pinctrl-single,function-mask = <0x7>;
             
             status = "okay";
+            
+            /* pin base, nr pins & gpio function */
+            pinctrl-single,gpio-range = <
+                    &range 0  36 0x00 
+                    &range 37 1  0x02 /* SDIO_CDATA1 */
+                    &range 38 2  0x00
+                    &range 40 5  0x01 /* SFC */
+                    &range 45 4  0x00
+                    &range 49 1  0x01 /* IR_IN */
+                    &range 50 16 0x01 /* NFC */
+                    &range 66 11 0x00
+                    &range 77 1  0x01 /* SVB_PWM */
+                    &range 78 1  0x00
+                    &range 79 16 0x01 /* SYS_RSTN_OUT + VIU */>;
+            
+            range: gpio-range {
+                #pinctrl-single,gpio-range-cells = <3>;
+            };
             
             ethernet_pins_rmii: pinmux_ethernet_pins_rmii  {
                 pinctrl-single,pins = <MUXCTRL_REG16 1 /* MII_RXD1 */ 
