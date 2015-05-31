@@ -102,7 +102,7 @@ static struct pl061_platform_data gpio_plat_data[] = {
 struct pl022_ssp_controller pl022_plat_data[] = {
     {
         .bus_id = 1,
-        .enable_dma = 1,
+        .enable_dma = 0, // Enabling DMA disables SPIDEV apparently 
         .dma_filter = pl08x_filter_id,
         .dma_tx_param = "ssp0_tx",
         .dma_rx_param = "ssp0_rx",
@@ -119,7 +119,7 @@ struct pl022_ssp_controller pl022_plat_data[] = {
     },
     {
         .bus_id = 2,
-        .enable_dma = 1,
+        .enable_dma = 0, // Enabling DMA disables SPIDEV apparently 
         .dma_filter = pl08x_filter_id,
         .dma_tx_param = "ssp1_tx",
         .dma_rx_param = "ssp1_rx",

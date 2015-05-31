@@ -441,8 +441,8 @@
                 interrupts = <6>;
                 clocks = <&clk_apb>;
                 clock-names = "apb_pclk";
-                dmas = <&dmac 14>, <&dmac 15>;
-                dma-names = "rx", "tx";
+                /*dmas = <&dmac 14>, <&dmac 15>;
+                dma-names = "rx", "tx";*/
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi0_pins>;
                 status = "disabled";
@@ -456,8 +456,8 @@
                 interrupts = <7>;
                 clocks = <&clk_apb>;
                 clock-names = "apb_pclk";
-                dmas = <&dmac 12>, <&dmac 13>;
-                dma-names = "rx", "tx";
+                /*dmas = <&dmac 12>, <&dmac 13>;
+                dma-names = "rx", "tx";*/
                 pinctrl-names = "default";
                 pinctrl-0 = <&spi1_pins>;
                 status = "disabled";
