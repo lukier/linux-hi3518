@@ -23,7 +23,7 @@
     
     /* Video capture */
     vicap@20580000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x20580000 0x40000>;
         interrupts = <22>;
         
@@ -35,7 +35,7 @@
     
     /* Intelligent Video Engine */
     ive@205E0000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x205E0000 0x10000>;
         interrupts = <21>;
         status = "okay";
@@ -43,7 +43,7 @@
     
     /* Video Processing Subsystem */
     vpss@20600000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x20600000 0x10000>;
         interrupts = <17>;
         status = "okay";
@@ -51,7 +51,7 @@
     
     /* MPEG Encoder */
     venc@20620000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x20620000 0x10000>;
         interrupts = <24>;
         status = "okay";
@@ -59,7 +59,7 @@
     
     /* JPEG Encoder */
     jpge@20660000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x20660000 0x10000>;
         interrupts = <26>;
         status = "okay";
@@ -67,7 +67,7 @@
     
     /* Motion Detection Unit */
     mdu@206C0000 {
-        compatible = "generic-uio";
+        compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x206C0000 0x10000>;
         interrupts = <28>;
         status = "okay";

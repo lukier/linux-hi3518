@@ -135,7 +135,7 @@
     };
     
     vic0: interrupt-controller@10140000 {
-        compatible = "arm,pl190-vic";
+        compatible = "arm,pl192-vic";
         interrupt-controller;
         #interrupt-cells = <1>;
         reg = <0x10140000 0x10000>;

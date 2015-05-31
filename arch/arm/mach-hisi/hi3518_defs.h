@@ -35,6 +35,13 @@
 #define GPIO10_BASE     0x201e0000
 #define GPIO11_BASE     0x201f0000
 
+#define VICAP_BASE      0x20580000
+#define IVE_BASE        0x205E0000
+#define VPSS_BASE       0x20600000
+#define VENC_BASE       0x20620000
+#define JPGE_BASE       0x20660000
+#define MDU_BASE        0x206C0000
+
 #define MUXCTRL_REG0    0x000
 #define MUXCTRL_REG1    0x004
 #define MUXCTRL_REG2    0x008
@@ -166,6 +173,13 @@
 #define I2C_IRQ         (HI3518_IRQ_START + 20)
 
 #define DMAC_IRQ        (HI3518_IRQ_START + 14)
+
+#define VICAP_IRQ       (HI3518_IRQ_START + 22)
+#define IVE_IRQ         (HI3518_IRQ_START + 21)
+#define VPSS_IRQ        (HI3518_IRQ_START + 17)
+#define VENC_IRQ        (HI3518_IRQ_START + 24)
+#define JPGE_IRQ        (HI3518_IRQ_START + 26)
+#define MDU_IRQ         (HI3518_IRQ_START + 28)
 
 #define HI3518_NR_IRQS  (HI3518_IRQ_START + 32)
 
