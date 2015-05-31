@@ -83,21 +83,6 @@ static void hi3518_restart(enum reboot_mode mode, const char *cmd)
     sysctl_soft_reset(regmem);
 }
 
-static struct resource wdt_resources[] = {
-    {
-        .start  = WDG_BASE,
-        .end    = WDG_BASE + 0x10000 - 1,
-        .flags  = IORESOURCE_MEM,
-    },
-};
-
-struct platform_device hi3518_wdt_device = {
-    .name       = "sp805-wdt",
-    .id     = -1,
-    .num_resources  = ARRAY_SIZE(wdt_resources),
-    .resource   = wdt_resources,
-};
-
 static struct pl061_platform_data gpio_plat_data[] = {
     { .gpio_base  = 0, .irq_base   = GPIO0_IRQ, .directions = 0x00, .values = 0x00, },
     { .gpio_base  = 8, .irq_base   = GPIO1_IRQ, .directions = 0x00, .values = 0x00, },
@@ -286,8 +271,6 @@ static struct of_dev_auxdata hi3518_auxdata_lookup[] __initdata = {
 static void __init hi3518_dt_init(void)
 {    
     of_platform_populate(NULL, of_default_bus_match_table, hi3518_auxdata_lookup, NULL);
-    
-    platform_device_register(&hi3518_wdt_device);
 }
 
 static const char *const hi3518_compat[] __initconst = {
