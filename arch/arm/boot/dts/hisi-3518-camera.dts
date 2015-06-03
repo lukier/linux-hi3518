@@ -20,11 +20,11 @@
     };
     
     /* UIO devices (for now) */
-    
-    /* Video capture */
+    /* Video capture, includes ISP registers (0x205A0000) */
     vicap@20580000 {
         compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x20580000 0x40000>;
+        reg-names = "io";
         interrupts = <22>;
         
         pinctrl-names = "default";
@@ -37,6 +37,7 @@
     ive@205E0000 {
         compatible = "uio,uio_pdrv_genirq", "generic-uio";
         reg = <0x205E0000 0x10000>;
+        reg-names = "io";
         interrupts = <21>;
         status = "okay";
     };
@@ -82,11 +83,11 @@
     status = "okay";
 };
 
-&uart1 {
+&ethernet {
     status = "okay";
 };
 
-&uart2 {
+&mdio {
     status = "okay";
 };
 
@@ -138,6 +139,15 @@
     status = "okay";
 };
 
+/*
+&uart1 {
+    status = "okay";
+};
+
+&uart2 {
+    status = "okay";
+};
+
 &wdt {
     status = "okay";
 };
@@ -151,14 +161,6 @@
 };
 
 &spi1 {
-    status = "okay";
-};
-
-&ethernet {
-    status = "okay";
-};
-
-&mdio {
     status = "okay";
 };
 
@@ -188,3 +190,4 @@
 &sdio {
     status = "okay";
 };
+*/

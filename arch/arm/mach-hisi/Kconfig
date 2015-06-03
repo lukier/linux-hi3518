@@ -24,6 +24,7 @@ config ARCH_HI3xxx
 	  
 config ARCH_HI3518
     bool "Hisilicon Hi3518 family" if ARCH_MULTI_V5
+    select CPU_ARM926T
     select ARM_VIC
     select PINCTRL
     select PINCTRL_SINGLE
