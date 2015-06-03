@@ -1,10 +1,14 @@
 #ifndef _HI3518_DEFS_H_
 #define _HI3518_DEFS_H_
 
-#include <asm/memory.h>
-
 #define DDR_BASE        0x80000000
+#define NAND_BASE       0x50000000
+#define SFC_BASE        0x58000000
+#define REMAPPED_BASE   0x00000000
+
 #define DDRC_BASE       0x20110000
+#define NAND_REG_BASE   0x10000000
+#define SFC_REG_BASE    0x10010000
 #define IOCONFIG_BASE   0x200F0000
 #define UART2_BASE      0x200A0000
 #define UART1_BASE      0x20090000
@@ -14,9 +18,15 @@
 #define CRG_REG_BASE    0x20030000
 #define TIMER23_BASE    0x20010000
 #define TIMER01_BASE    0x20000000
-#define REG_BASE_INTC   0x10140000
+#define INTC_REG_BASE   0x10140000
 #define DMAC_BASE       0x100D0000
 #define RTC_BASE        0x20060000
+#define DDRT_BASE       0x206D0000
+#define ETH_BASE        0x10090000
+#define SDIO_BASE       0x10020000
+#define DDRPHY_BASE     0x20120000
+#define USB_OHCI_BASE   0x100A0000
+#define USB_EHCI_BASE   0x100B0000
 
 #define SSP0_BASE       0x200C0000
 #define SSP1_BASE       0x200E0000
@@ -166,6 +176,7 @@
 
 #define RTC_IRQ         (HI3518_IRQ_START + 2)
 #define TEMPER_IRQ      (HI3518_IRQ_START + 10)
+#define ETHMAC_IRQ      (HI3518_IRQ_START + 12)
 
 #define SSP0_IRQ        (HI3518_IRQ_START + 6)
 #define SSP1_IRQ        (HI3518_IRQ_START + 7)
