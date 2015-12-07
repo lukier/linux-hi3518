@@ -93,6 +93,8 @@ static unsigned long cpu_pgsz_mask;
 static struct linux_prom64_registers pavail[MAX_BANKS];
 static int pavail_ents;
 
+u64 numa_latency[MAX_NUMNODES][MAX_NUMNODES];
+
 static int cmp_p64(const void *a, const void *b)
 {
 	const struct linux_prom64_registers *x = a, *y = b;
@@ -1157,6 +1159,48 @@ static struct mdesc_mlgroup * __init find_mlgroup(u64 node)
 	return NULL;
 }
 
+int __node_distance(int from, int to)
+{
+	if ((from >= MAX_NUMNODES) || (to >= MAX_NUMNODES)) {
+		pr_warn("Returning default NUMA distance value for %d->%d\n",
+			from, to);
+		return (from == to) ? LOCAL_DISTANCE : REMOTE_DISTANCE;
+	}
+	return numa_latency[from][to];
+}
+
+static int find_best_numa_node_for_mlgroup(struct mdesc_mlgroup *grp)
+{
+	int i;
+
+	for (i = 0; i < MAX_NUMNODES; i++) {
+		struct node_mem_mask *n = &node_masks[i];
+
+		if ((grp->mask == n->mask) && (grp->match == n->val))
+			break;
+	}
+	return i;
+}
+
+static void find_numa_latencies_for_group(struct mdesc_handle *md, u64 grp,
+					  int index)
+{
+	u64 arc;
+
+	mdesc_for_each_arc(arc, md, grp, MDESC_ARC_TYPE_FWD) {
+		int tnode;
+		u64 target = mdesc_arc_target(md, arc);
+		struct mdesc_mlgroup *m = find_mlgroup(target);
+
+		if (!m)
+			continue;
+		tnode = find_best_numa_node_for_mlgroup(m);
+		if (tnode == MAX_NUMNODES)
+			continue;
+		numa_latency[index][tnode] = m->latency;
+	}
+}
+
 static int __init numa_attach_mlgroup(struct mdesc_handle *md, u64 grp,
 				      int index)
 {
@@ -1220,8 +1264,15 @@ static int __init numa_parse_mdesc_group(struct mdesc_handle *md, u64 grp,
 static int __init numa_parse_mdesc(void)
 {
 	struct mdesc_handle *md = mdesc_grab();
-	int i, err, count;
+	int i, j, err, count;
 	u64 node;
+
+	/* Some sane defaults for numa latency values */
+	for (i = 0; i < MAX_NUMNODES; i++) {
+		for (j = 0; j < MAX_NUMNODES; j++)
+			numa_latency[i][j] = (i == j) ?
+				LOCAL_DISTANCE : REMOTE_DISTANCE;
+	}
 
 	node = mdesc_node_by_name(md, MDESC_NODE_NULL, "latency-groups");
 	if (node == MDESC_NODE_NULL) {
@@ -1243,6 +1294,23 @@ static int __init numa_parse_mdesc(void)
 		if (err < 0)
 			break;
 		count++;
+	}
+
+	count = 0;
+	mdesc_for_each_node_by_name(md, node, "group") {
+		find_numa_latencies_for_group(md, node, count);
+		count++;
+	}
+
+	/* Normalize numa latency matrix according to ACPI SLIT spec. */
+	for (i = 0; i < MAX_NUMNODES; i++) {
+		u64 self_latency = numa_latency[i][i];
+
+		for (j = 0; j < MAX_NUMNODES; j++) {
+			numa_latency[i][j] =
+				(numa_latency[i][j] * LOCAL_DISTANCE) /
+				self_latency;
+		}
 	}
 
 	add_node_ranges();
@@ -1966,7 +2034,8 @@ static phys_addr_t __init available_memory(void)
 	phys_addr_t pa_start, pa_end;
 	u64 i;
 
-	for_each_free_mem_range(i, NUMA_NO_NODE, &pa_start, &pa_end, NULL)
+	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE, &pa_start,
+				&pa_end, NULL)
 		available = available + (pa_end  - pa_start);
 
 	return available;
@@ -1992,7 +2061,8 @@ static void __init reduce_memory(phys_addr_t limit_ram)
 	if (limit_ram >= avail_ram)
 		return;
 
-	for_each_free_mem_range(i, NUMA_NO_NODE, &pa_start, &pa_end, NULL) {
+	for_each_free_mem_range(i, NUMA_NO_NODE, MEMBLOCK_NONE, &pa_start,
+				&pa_end, NULL) {
 		phys_addr_t region_size = pa_end - pa_start;
 		phys_addr_t clip_start = pa_start;
 
@@ -2738,7 +2808,7 @@ void hugetlb_setup(struct pt_regs *regs)
 	struct mm_struct *mm = current->mm;
 	struct tsb_config *tp;
 
-	if (in_atomic() || !mm) {
+	if (faulthandler_disabled() || !mm) {
 		const struct exception_table_entry *entry;
 
 		entry = search_exception_tables(regs->tpc);

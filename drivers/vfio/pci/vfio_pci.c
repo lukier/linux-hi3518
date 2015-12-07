@@ -940,13 +940,13 @@ static int vfio_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	if (pdev->hdr_type != PCI_HEADER_TYPE_NORMAL)
 		return -EINVAL;
 
-	group = iommu_group_get(&pdev->dev);
+	group = vfio_iommu_group_get(&pdev->dev);
 	if (!group)
 		return -EINVAL;
 
 	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
 	if (!vdev) {
-		iommu_group_put(group);
+		vfio_iommu_group_put(group, &pdev->dev);
 		return -ENOMEM;
 	}
 
@@ -957,7 +957,7 @@ static int vfio_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	ret = vfio_add_group_dev(&pdev->dev, &vfio_pci_ops, vdev);
 	if (ret) {
-		iommu_group_put(group);
+		vfio_iommu_group_put(group, &pdev->dev);
 		kfree(vdev);
 		return ret;
 	}
@@ -993,7 +993,7 @@ static void vfio_pci_remove(struct pci_dev *pdev)
 	if (!vdev)
 		return;
 
-	iommu_group_put(pdev->dev.iommu_group);
+	vfio_iommu_group_put(pdev->dev.iommu_group, &pdev->dev);
 	kfree(vdev);
 
 	if (vfio_pci_is_vga(pdev)) {
@@ -1056,19 +1056,21 @@ struct vfio_devices {
 static int vfio_pci_get_devs(struct pci_dev *pdev, void *data)
 {
 	struct vfio_devices *devs = data;
-	struct pci_driver *pci_drv = ACCESS_ONCE(pdev->driver);
-
-	if (pci_drv != &vfio_pci_driver)
-		return -EBUSY;
+	struct vfio_device *device;
 
 	if (devs->cur_index == devs->max_index)
 		return -ENOSPC;
 
-	devs->devices[devs->cur_index] = vfio_device_get_from_dev(&pdev->dev);
-	if (!devs->devices[devs->cur_index])
+	device = vfio_device_get_from_dev(&pdev->dev);
+	if (!device)
 		return -EINVAL;
 
-	devs->cur_index++;
+	if (pci_dev_driver(pdev) != &vfio_pci_driver) {
+		vfio_device_put(device);
+		return -EBUSY;
+	}
+
+	devs->devices[devs->cur_index++] = device;
 	return 0;
 }
 

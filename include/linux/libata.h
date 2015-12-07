@@ -134,7 +134,6 @@ enum {
 	ATA_ALL_DEVICES		= (1 << ATA_MAX_DEVICES) - 1,
 
 	ATA_SHT_EMULATED	= 1,
-	ATA_SHT_CMD_PER_LUN	= 1,
 	ATA_SHT_THIS_ID		= -1,
 	ATA_SHT_USE_CLUSTERING	= 1,
 
@@ -255,6 +254,7 @@ enum {
 
 	ATA_PFLAG_PIO32		= (1 << 20),  /* 32bit PIO */
 	ATA_PFLAG_PIO32CHANGE	= (1 << 21),  /* 32bit PIO can be turned on/off */
+	ATA_PFLAG_EXTERNAL	= (1 << 22),  /* eSATA/external port */
 
 	/* struct ata_queued_cmd flags */
 	ATA_QCFLAG_ACTIVE	= (1 << 0), /* cmd not yet ack'd to scsi lyer */
@@ -431,6 +431,9 @@ enum {
 	ATA_HORKAGE_NOLPM	= (1 << 20),	/* don't use LPM */
 	ATA_HORKAGE_WD_BROKEN_LPM = (1 << 21),	/* some WDs have broken LPM */
 	ATA_HORKAGE_ZERO_AFTER_TRIM = (1 << 22),/* guarantees zero after trim */
+	ATA_HORKAGE_NO_NCQ_LOG	= (1 << 23),	/* don't use NCQ for log read */
+	ATA_HORKAGE_NOTRIM	= (1 << 24),	/* don't use TRIM */
+	ATA_HORKAGE_MAX_SEC_1024 = (1 << 25),	/* Limit max sects to 1024 */
 
 	 /* DMA mask for user DMA control: User visible values; DO NOT
 	    renumber */
@@ -1364,7 +1367,6 @@ extern struct device_attribute *ata_common_sdev_attrs[];
 	.can_queue		= ATA_DEF_QUEUE,		\
 	.tag_alloc_policy	= BLK_TAG_ALLOC_RR,		\
 	.this_id		= ATA_SHT_THIS_ID,		\
-	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,		\
 	.emulated		= ATA_SHT_EMULATED,		\
 	.use_clustering		= ATA_SHT_USE_CLUSTERING,	\
 	.proc_name		= drv_name,			\

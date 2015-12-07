@@ -217,6 +217,9 @@ static bool mxs_phy_get_vbus_status(struct mxs_phy *mxs_phy)
 {
 	unsigned int vbus_value;
 
+	if (!mxs_phy->regmap_anatop)
+		return false;
+
 	if (mxs_phy->port_id == 0)
 		regmap_read(mxs_phy->regmap_anatop,
 			ANADIG_USB1_VBUS_DET_STAT,
@@ -449,9 +452,12 @@ static int mxs_phy_probe(struct platform_device *pdev)
 	struct clk *clk;
 	struct mxs_phy *mxs_phy;
 	int ret;
-	const struct of_device_id *of_id =
-			of_match_device(mxs_phy_dt_ids, &pdev->dev);
+	const struct of_device_id *of_id;
 	struct device_node *np = pdev->dev.of_node;
+
+	of_id = of_match_device(mxs_phy_dt_ids, &pdev->dev);
+	if (!of_id)
+		return -ENODEV;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
@@ -503,11 +509,7 @@ static int mxs_phy_probe(struct platform_device *pdev)
 
 	device_set_wakeup_capable(&pdev->dev, true);
 
-	ret = usb_add_phy_dev(&mxs_phy->phy);
-	if (ret)
-		return ret;
-
-	return 0;
+	return usb_add_phy_dev(&mxs_phy->phy);
 }
 
 static int mxs_phy_remove(struct platform_device *pdev)
